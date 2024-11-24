@@ -28,10 +28,10 @@ declare const fullApi: ApiFromModules<{
 }>;
 export type Mounts = {
   lib: {
-    initGithubOwners: FunctionReference<
+    initGithubOwner: FunctionReference<
       "mutation",
       "public",
-      { githubOwners: Array<string> },
+      { owner: string },
       any
     >;
     sync: FunctionReference<

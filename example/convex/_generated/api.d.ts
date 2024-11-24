@@ -40,10 +40,10 @@ export declare const internal: FilterApi<
 export declare const components: {
   ossStats: {
     lib: {
-      initGithubOwners: FunctionReference<
+      initGithubOwner: FunctionReference<
         "mutation",
         "internal",
-        { githubOwners: Array<string> },
+        { owner: string },
         any
       >;
       sync: FunctionReference<

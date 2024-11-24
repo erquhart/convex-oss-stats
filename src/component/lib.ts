@@ -33,25 +33,23 @@ export const updateGithubStars = mutation({
   },
 });
 
-export const initGithubOwners = mutation({
+export const initGithubOwner = mutation({
   args: {
-    githubOwners: v.array(v.string()),
+    owner: v.string(),
   },
   handler: async (ctx, args) => {
-    for (const owner of args.githubOwners) {
-      const existing = await ctx.db
-        .query("githubOwners")
-        .withIndex("name", (q) => q.eq("name", owner))
-        .unique();
-      if (existing) {
-        continue;
-      }
-      await ctx.db.insert("githubOwners", {
-        name: owner,
-        stars: 0,
-        updatedAt: Date.now(),
-      });
+    const existing = await ctx.db
+      .query("githubOwners")
+      .withIndex("name", (q) => q.eq("name", args.owner))
+      .unique();
+    if (existing) {
+      return;
     }
+    await ctx.db.insert("githubOwners", {
+      name: args.owner,
+      stars: 0,
+      updatedAt: Date.now(),
+    });
   },
 });
 
@@ -87,11 +85,11 @@ export const sync = action({
   },
   handler: async (ctx, args) => {
     const octokit = new Octokit({ auth: args.personalAccessToken });
-    await ctx.runMutation(api.lib.initGithubOwners, {
-      githubOwners: args.githubOwners,
-    });
     for (const owner of args.githubOwners) {
       const user = await octokit.rest.users.getByUsername({ username: owner });
+      await ctx.runMutation(api.lib.initGithubOwner, {
+        owner: user.data.login,
+      });
       const isOrg = user.data.type === "Organization";
       const iterator = isOrg
         ? octokit.paginate.iterator(octokit.rest.repos.listForOrg, {
@@ -115,11 +113,11 @@ export const sync = action({
           (acc, repo) => acc + (repo.stargazers_count ?? 0),
           0
         );
-        await ctx.runMutation(api.lib.updateGithubOwner, {
-          owner,
-          stars: totalStars,
-        });
       }
+      await ctx.runMutation(api.lib.updateGithubOwner, {
+        owner: user.data.login,
+        stars: totalStars,
+      });
     }
   },
 });
