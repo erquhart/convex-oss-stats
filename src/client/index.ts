@@ -46,7 +46,7 @@ export class OssStats {
     http.route({
       path,
       method: "POST",
-      handler: httpActionGeneric(async (_ctx, request) => {
+      handler: httpActionGeneric(async (ctx, request) => {
         const webhooks = new Webhooks({
           secret: this.githubWebhookSecret,
         });
@@ -61,10 +61,11 @@ export class OssStats {
         const {
           repository: { name, owner, stargazers_count: stars },
         } = body;
-        await _ctx.runMutation(this.component.lib.updateGithubRepoStars, {
+        await ctx.runMutation(this.component.lib.updateGithubRepoStars, {
           owner: owner.login,
           name,
           stars,
+          personalAccessToken: this.personalAccessToken,
         });
         return new Response(null, { status: 200 });
       }),
@@ -78,8 +79,8 @@ export class OssStats {
     });
   }
 
-  async getGithubOwnerStars(ctx: RunQueryCtx, owner: string) {
-    return await ctx.runQuery(this.component.lib.getGithubOwnerStars, {
+  async getGithubOwner(ctx: RunQueryCtx, owner: string) {
+    return await ctx.runQuery(this.component.lib.getGithubOwner, {
       owner,
     });
   }
@@ -98,12 +99,12 @@ export class OssStats {
           await this.sync(ctx);
         },
       }),
-      getGithubOwnerStars: queryGeneric({
+      getGithubOwner: queryGeneric({
         args: {
           owner: v.string(),
         },
         handler: async (ctx, args) => {
-          return await this.getGithubOwnerStars(ctx, args.owner);
+          return await this.getGithubOwner(ctx, args.owner);
         },
       }),
     };

@@ -6,6 +6,7 @@ export default defineSchema({
     name: v.string(),
     nameNormalized: v.string(),
     stars: v.number(),
+    contributorsCount: v.number(),
     updatedAt: v.number(),
   }).index("name", ["nameNormalized"]),
   githubRepos: defineTable({
@@ -14,6 +15,7 @@ export default defineSchema({
     name: v.string(),
     nameNormalized: v.string(),
     stars: v.number(),
+    contributorsCount: v.number(),
     updatedAt: v.number(),
   }).index("owner_name", ["ownerNormalized", "nameNormalized"]),
 });

@@ -42,14 +42,8 @@ export declare const internal: FilterApi<
 export declare const components: {
   ossStats: {
     lib: {
-      getGithubOwnerStars: FunctionReference<
+      getGithubOwner: FunctionReference<
         "query",
-        "internal",
-        { owner: string },
-        any
-      >;
-      initGithubOwner: FunctionReference<
-        "mutation",
         "internal",
         { owner: string },
         any
@@ -63,19 +57,31 @@ export declare const components: {
       updateGithubOwner: FunctionReference<
         "mutation",
         "internal",
-        { owner: string; stars: number },
+        { contributorsCount?: number; owner: string; stars?: number },
         any
       >;
       updateGithubRepoStars: FunctionReference<
         "mutation",
         "internal",
-        { name: string; owner: string; stars: number },
+        {
+          name: string;
+          owner: string;
+          personalAccessToken: string;
+          stars?: number;
+        },
         any
       >;
-      updateGithubStars: FunctionReference<
+      updateGithubRepos: FunctionReference<
         "mutation",
         "internal",
-        { repos: Array<{ name: string; owner: string; stars: number }> },
+        {
+          repos: Array<{
+            contributorsCount: number;
+            name: string;
+            owner: string;
+            stars: number;
+          }>;
+        },
         any
       >;
     };
