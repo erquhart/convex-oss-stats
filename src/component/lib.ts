@@ -1,7 +1,10 @@
 import { v } from "convex/values";
 import { Octokit } from "octokit";
+import { Crons } from "@convex-dev/crons";
 import { action, mutation } from "./_generated/server";
-import { api } from "./_generated/api";
+import { api, components } from "./_generated/api";
+
+const crons = new Crons(components.crons);
 
 export const updateGithubStars = mutation({
   args: {
@@ -163,5 +166,19 @@ export const sync = action({
         stars: totalStars,
       });
     }
+    const cron = await crons.get(ctx, { name: "sync" });
+    if (cron) {
+      await crons.delete(ctx, { name: "sync" });
+    }
+    await crons.register(
+      ctx,
+      { kind: "interval", ms: 3600000 },
+      api.lib.sync,
+      {
+        personalAccessToken: args.personalAccessToken,
+        githubOwners: args.githubOwners,
+      },
+      "sync"
+    );
   },
 });
