@@ -40,13 +40,13 @@ export const initGithubOwners = mutation({
   handler: async (ctx, args) => {
     for (const owner of args.githubOwners) {
       const existing = await ctx.db
-        .query("githubOrgs")
+        .query("githubOwners")
         .withIndex("name", (q) => q.eq("name", owner))
         .unique();
       if (existing) {
         continue;
       }
-      await ctx.db.insert("githubOrgs", {
+      await ctx.db.insert("githubOwners", {
         name: owner,
         stars: 0,
         updatedAt: Date.now(),
@@ -62,7 +62,7 @@ export const updateGithubOwner = mutation({
   },
   handler: async (ctx, args) => {
     const existingOwner = await ctx.db
-      .query("githubOrgs")
+      .query("githubOwners")
       .withIndex("name", (q) => q.eq("name", args.owner))
       .unique();
     if (existingOwner) {
@@ -72,7 +72,7 @@ export const updateGithubOwner = mutation({
       });
       return;
     }
-    await ctx.db.insert("githubOrgs", {
+    await ctx.db.insert("githubOwners", {
       name: args.owner,
       stars: args.stars,
       updatedAt: Date.now(),
@@ -91,10 +91,17 @@ export const sync = action({
       githubOwners: args.githubOwners,
     });
     for (const owner of args.githubOwners) {
-      const iterator = octokit.paginate.iterator(
-        octokit.rest.repos.listForOrg,
-        { org: owner, per_page: 30 }
-      );
+      const user = await octokit.rest.users.getByUsername({ username: owner });
+      const isOrg = user.data.type === "Organization";
+      const iterator = isOrg
+        ? octokit.paginate.iterator(octokit.rest.repos.listForOrg, {
+            org: owner,
+            per_page: 30,
+          })
+        : octokit.paginate.iterator(octokit.rest.repos.listForUser, {
+            username: owner,
+            per_page: 30,
+          });
       let totalStars = 0;
       for await (const { data: repos } of iterator) {
         await ctx.runMutation(api.lib.updateGithubStars, {

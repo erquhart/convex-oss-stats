@@ -10,12 +10,14 @@ import { api } from "../component/_generated/api";
 
 export class OssStats {
   public personalAccessToken: string;
+  public githubOwners: string[];
   constructor(
     public component: UseApi<typeof api>,
-    public options?: { personalAccessToken?: string }
+    public options?: { personalAccessToken?: string; githubOwners?: string[] }
   ) {
     this.personalAccessToken =
       options?.personalAccessToken ?? process.env.GITHUB_ACCESS_TOKEN!;
+    this.githubOwners = options?.githubOwners ?? [];
     if (!this.personalAccessToken) {
       throw new Error("Personal access token is required");
     }
@@ -24,9 +26,10 @@ export class OssStats {
   async sync(ctx: RunActionCtx) {
     return await ctx.runAction(this.component.lib.sync, {
       personalAccessToken: this.personalAccessToken,
-      githubOwners: ["TanStack"],
+      githubOwners: this.githubOwners,
     });
   }
+
   /**
    * For easy re-exporting.
    * Apps can do

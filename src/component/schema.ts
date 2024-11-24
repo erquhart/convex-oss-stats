@@ -2,7 +2,7 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
-  githubOrgs: defineTable({
+  githubOwners: defineTable({
     name: v.string(),
     stars: v.number(),
     updatedAt: v.number(),
