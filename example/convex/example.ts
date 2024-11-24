@@ -6,4 +6,4 @@ export const ossStats = new OssStats(components.ossStats, {
   githubOwners: ["erquhart", "get-convex", "tanstack"],
 });
 
-export const { sync } = ossStats.api();
+export const { sync, getGithubOwnerStars } = ossStats.api();

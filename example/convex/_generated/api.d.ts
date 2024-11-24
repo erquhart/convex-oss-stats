@@ -42,6 +42,12 @@ export declare const internal: FilterApi<
 export declare const components: {
   ossStats: {
     lib: {
+      getGithubOwnerStars: FunctionReference<
+        "query",
+        "internal",
+        { owner: string },
+        any
+      >;
       initGithubOwner: FunctionReference<
         "mutation",
         "internal",

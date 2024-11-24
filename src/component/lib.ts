@@ -1,7 +1,7 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { Octokit } from "octokit";
 import { Crons } from "@convex-dev/crons";
-import { action, mutation } from "./_generated/server";
+import { action, mutation, query } from "./_generated/server";
 import { api, components } from "./_generated/api";
 
 const crons = new Crons(components.crons);
@@ -21,7 +21,9 @@ export const updateGithubStars = mutation({
       const existing = await ctx.db
         .query("githubRepos")
         .withIndex("owner_name", (q) =>
-          q.eq("owner", repo.owner).eq("name", repo.name)
+          q
+            .eq("ownerNormalized", repo.owner.toLowerCase())
+            .eq("nameNormalized", repo.name.toLowerCase())
         )
         .unique();
       if (existing?.stars === repo.stars) {
@@ -31,7 +33,12 @@ export const updateGithubStars = mutation({
         await ctx.db.patch(existing._id, { stars: repo.stars });
         return;
       }
-      await ctx.db.insert("githubRepos", { ...repo, updatedAt: Date.now() });
+      await ctx.db.insert("githubRepos", {
+        ...repo,
+        ownerNormalized: repo.owner.toLowerCase(),
+        nameNormalized: repo.name.toLowerCase(),
+        updatedAt: Date.now(),
+      });
     }
   },
 });
@@ -43,13 +50,16 @@ export const initGithubOwner = mutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("githubOwners")
-      .withIndex("name", (q) => q.eq("name", args.owner))
+      .withIndex("name", (q) =>
+        q.eq("nameNormalized", args.owner.toLowerCase())
+      )
       .unique();
     if (existing) {
       return;
     }
     await ctx.db.insert("githubOwners", {
       name: args.owner,
+      nameNormalized: args.owner.toLowerCase(),
       stars: 0,
       updatedAt: Date.now(),
     });
@@ -64,7 +74,9 @@ export const updateGithubOwner = mutation({
   handler: async (ctx, args) => {
     const existingOwner = await ctx.db
       .query("githubOwners")
-      .withIndex("name", (q) => q.eq("name", args.owner))
+      .withIndex("name", (q) =>
+        q.eq("nameNormalized", args.owner.toLowerCase())
+      )
       .unique();
     if (existingOwner) {
       await ctx.db.patch(existingOwner._id, {
@@ -75,6 +87,7 @@ export const updateGithubOwner = mutation({
     }
     await ctx.db.insert("githubOwners", {
       name: args.owner,
+      nameNormalized: args.owner.toLowerCase(),
       stars: args.stars,
       updatedAt: Date.now(),
     });
@@ -90,7 +103,9 @@ export const updateGithubRepoStars = mutation({
   handler: async (ctx, args) => {
     const owner = await ctx.db
       .query("githubOwners")
-      .withIndex("name", (q) => q.eq("name", args.owner))
+      .withIndex("name", (q) =>
+        q.eq("nameNormalized", args.owner.toLowerCase())
+      )
       .unique();
     if (!owner) {
       throw new Error(`Owner ${args.owner} not found`);
@@ -98,13 +113,17 @@ export const updateGithubRepoStars = mutation({
     const repo = await ctx.db
       .query("githubRepos")
       .withIndex("owner_name", (q) =>
-        q.eq("owner", args.owner).eq("name", args.name)
+        q
+          .eq("ownerNormalized", args.owner.toLowerCase())
+          .eq("nameNormalized", args.name.toLowerCase())
       )
       .unique();
     if (!repo) {
       await ctx.db.insert("githubRepos", {
         owner: args.owner,
+        ownerNormalized: args.owner.toLowerCase(),
         name: args.name,
+        nameNormalized: args.name.toLowerCase(),
         stars: args.stars,
         updatedAt: Date.now(),
       });
@@ -180,5 +199,23 @@ export const sync = action({
       },
       "sync"
     );
+  },
+});
+
+export const getGithubOwnerStars = query({
+  args: {
+    owner: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const owner = await ctx.db
+      .query("githubOwners")
+      .withIndex("name", (q) =>
+        q.eq("nameNormalized", args.owner.toLowerCase())
+      )
+      .unique();
+    if (!owner) {
+      throw new ConvexError(`Owner "${args.owner}" not found`);
+    }
+    return owner.stars;
   },
 });

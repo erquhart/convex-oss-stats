@@ -3,11 +3,13 @@ import {
   FunctionReference,
   GenericActionCtx,
   GenericDataModel,
+  GenericQueryCtx,
   httpActionGeneric,
   HttpRouter,
   internalActionGeneric,
+  queryGeneric,
 } from "convex/server";
-import { GenericId } from "convex/values";
+import { GenericId, v } from "convex/values";
 import { api } from "../component/_generated/api";
 import { Webhooks } from "@octokit/webhooks";
 
@@ -29,7 +31,7 @@ export class OssStats {
       options?.githubWebhookSecret ?? process.env.GITHUB_WEBHOOK_SECRET!;
     this.githubOwners = options?.githubOwners ?? [];
     if (!this.personalAccessToken) {
-      throw new Error("Personal access token is required");
+      throw new Error("GITHUB_ACCESS_TOKEN is required");
     }
   }
 
@@ -76,6 +78,12 @@ export class OssStats {
     });
   }
 
+  async getGithubOwnerStars(ctx: RunQueryCtx, owner: string) {
+    return await ctx.runQuery(this.component.lib.getGithubOwnerStars, {
+      owner,
+    });
+  }
+
   /**
    * For easy re-exporting.
    * Apps can do
@@ -90,11 +98,23 @@ export class OssStats {
           await this.sync(ctx);
         },
       }),
+      getGithubOwnerStars: queryGeneric({
+        args: {
+          owner: v.string(),
+        },
+        handler: async (ctx, args) => {
+          return await this.getGithubOwnerStars(ctx, args.owner);
+        },
+      }),
     };
   }
 }
 
 /* Type utils follow */
+
+type RunQueryCtx = {
+  runQuery: GenericQueryCtx<GenericDataModel>["runQuery"];
+};
 
 type RunActionCtx = {
   runAction: GenericActionCtx<GenericDataModel>["runAction"];

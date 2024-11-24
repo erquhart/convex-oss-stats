@@ -28,6 +28,12 @@ declare const fullApi: ApiFromModules<{
 }>;
 export type Mounts = {
   lib: {
+    getGithubOwnerStars: FunctionReference<
+      "query",
+      "public",
+      { owner: string },
+      any
+    >;
     initGithubOwner: FunctionReference<
       "mutation",
       "public",

@@ -1,5 +1,5 @@
 {
-  "name": "@convex-dev/oss-stats",
+  "name": "@erquhart/convex-oss-stats",
   "description": "A stats component for Convex.",
   "repository": "github:get-convex/oss-stats",
   "homepage": "https://github.com/get-convex/oss-stats#readme",
