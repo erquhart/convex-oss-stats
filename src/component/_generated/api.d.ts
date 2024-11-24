@@ -46,6 +46,12 @@ export type Mounts = {
       { owner: string; stars: number },
       any
     >;
+    updateGithubRepoStars: FunctionReference<
+      "mutation",
+      "public",
+      { name: string; owner: string; stars: number },
+      any
+    >;
     updateGithubStars: FunctionReference<
       "mutation",
       "public",

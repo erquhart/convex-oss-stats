@@ -78,6 +78,50 @@ export const updateGithubOwner = mutation({
   },
 });
 
+export const updateGithubRepoStars = mutation({
+  args: {
+    owner: v.string(),
+    name: v.string(),
+    stars: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const owner = await ctx.db
+      .query("githubOwners")
+      .withIndex("name", (q) => q.eq("name", args.owner))
+      .unique();
+    if (!owner) {
+      throw new Error(`Owner ${args.owner} not found`);
+    }
+    const repo = await ctx.db
+      .query("githubRepos")
+      .withIndex("owner_name", (q) =>
+        q.eq("owner", args.owner).eq("name", args.name)
+      )
+      .unique();
+    if (!repo) {
+      await ctx.db.insert("githubRepos", {
+        owner: args.owner,
+        name: args.name,
+        stars: args.stars,
+        updatedAt: Date.now(),
+      });
+      await ctx.db.patch(owner._id, {
+        stars: owner.stars + args.stars,
+        updatedAt: Date.now(),
+      });
+      return;
+    }
+    await ctx.db.patch(repo._id, {
+      stars: args.stars,
+      updatedAt: Date.now(),
+    });
+    await ctx.db.patch(owner._id, {
+      stars: Math.max(0, owner.stars - repo.stars + args.stars),
+      updatedAt: Date.now(),
+    });
+  },
+});
+
 export const sync = action({
   args: {
     personalAccessToken: v.string(),

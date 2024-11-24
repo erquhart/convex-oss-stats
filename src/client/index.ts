@@ -3,24 +3,70 @@ import {
   FunctionReference,
   GenericActionCtx,
   GenericDataModel,
+  httpActionGeneric,
+  HttpRouter,
   internalActionGeneric,
 } from "convex/server";
 import { GenericId } from "convex/values";
 import { api } from "../component/_generated/api";
+import { Webhooks } from "@octokit/webhooks";
 
 export class OssStats {
   public personalAccessToken: string;
+  public githubWebhookSecret: string;
   public githubOwners: string[];
   constructor(
     public component: UseApi<typeof api>,
-    public options?: { personalAccessToken?: string; githubOwners?: string[] }
+    public options?: {
+      personalAccessToken?: string;
+      githubWebhookSecret?: string;
+      githubOwners?: string[];
+    }
   ) {
     this.personalAccessToken =
       options?.personalAccessToken ?? process.env.GITHUB_ACCESS_TOKEN!;
+    this.githubWebhookSecret =
+      options?.githubWebhookSecret ?? process.env.GITHUB_WEBHOOK_SECRET!;
     this.githubOwners = options?.githubOwners ?? [];
     if (!this.personalAccessToken) {
       throw new Error("Personal access token is required");
     }
+  }
+
+  registerRoutes(
+    http: HttpRouter,
+    {
+      path = "/events/github",
+    }: {
+      path?: string;
+    } = {}
+  ) {
+    http.route({
+      path,
+      method: "POST",
+      handler: httpActionGeneric(async (_ctx, request) => {
+        const webhooks = new Webhooks({
+          secret: this.githubWebhookSecret,
+        });
+
+        const signature = request.headers.get("x-hub-signature-256")!;
+        const bodyString = await request.text();
+
+        if (!(await webhooks.verify(bodyString, signature))) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+        const body = JSON.parse(bodyString);
+        const {
+          repository: { name, owner, stargazers_count: stars },
+        } = body;
+        await _ctx.runMutation(this.component.lib.updateGithubRepoStars, {
+          owner: owner.login,
+          name,
+          stars,
+        });
+        return new Response(null, { status: 200 });
+      }),
+    });
   }
 
   async sync(ctx: RunActionCtx) {

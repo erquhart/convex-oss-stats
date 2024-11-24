@@ -9,6 +9,7 @@
  */
 
 import type * as example from "../example.js";
+import type * as http from "../http.js";
 
 import type {
   ApiFromModules,
@@ -25,6 +26,7 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   example: typeof example;
+  http: typeof http;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 
@@ -56,6 +58,12 @@ export declare const components: {
         "mutation",
         "internal",
         { owner: string; stars: number },
+        any
+      >;
+      updateGithubRepoStars: FunctionReference<
+        "mutation",
+        "internal",
+        { name: string; owner: string; stars: number },
         any
       >;
       updateGithubStars: FunctionReference<
