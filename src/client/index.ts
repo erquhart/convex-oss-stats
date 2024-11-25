@@ -14,23 +14,26 @@ import { api } from "../component/_generated/api";
 import { Webhooks } from "@octokit/webhooks";
 
 export class OssStats {
-  public personalAccessToken: string;
+  public githubAccessToken: string;
   public githubWebhookSecret: string;
   public githubOwners: string[];
+  public npmOrgs: string[];
   constructor(
     public component: UseApi<typeof api>,
     public options?: {
-      personalAccessToken?: string;
+      githubAccessToken?: string;
       githubWebhookSecret?: string;
       githubOwners?: string[];
+      npmOrgs?: string[];
     }
   ) {
-    this.personalAccessToken =
-      options?.personalAccessToken ?? process.env.GITHUB_ACCESS_TOKEN!;
+    this.githubAccessToken =
+      options?.githubAccessToken ?? process.env.GITHUB_ACCESS_TOKEN!;
     this.githubWebhookSecret =
       options?.githubWebhookSecret ?? process.env.GITHUB_WEBHOOK_SECRET!;
     this.githubOwners = options?.githubOwners ?? [];
-    if (!this.personalAccessToken) {
+    this.npmOrgs = options?.npmOrgs ?? [];
+    if (!this.githubAccessToken) {
       throw new Error("GITHUB_ACCESS_TOKEN is required");
     }
   }
@@ -64,8 +67,8 @@ export class OssStats {
         await ctx.runMutation(this.component.lib.updateGithubRepoStars, {
           owner: owner.login,
           name,
-          stars,
-          personalAccessToken: this.personalAccessToken,
+          starCount: stars,
+          githubAccessToken: this.githubAccessToken,
         });
         return new Response(null, { status: 200 });
       }),
@@ -74,14 +77,21 @@ export class OssStats {
 
   async sync(ctx: RunActionCtx) {
     return await ctx.runAction(this.component.lib.sync, {
-      personalAccessToken: this.personalAccessToken,
+      githubAccessToken: this.githubAccessToken,
       githubOwners: this.githubOwners,
+      npmOrgs: this.npmOrgs,
     });
   }
 
   async getGithubOwner(ctx: RunQueryCtx, owner: string) {
     return await ctx.runQuery(this.component.lib.getGithubOwner, {
       owner,
+    });
+  }
+
+  async getNpmOrg(ctx: RunQueryCtx, name: string) {
+    return await ctx.runQuery(this.component.lib.getNpmOrg, {
+      name,
     });
   }
 
@@ -105,6 +115,14 @@ export class OssStats {
         },
         handler: async (ctx, args) => {
           return await this.getGithubOwner(ctx, args.owner);
+        },
+      }),
+      getNpmOrg: queryGeneric({
+        args: {
+          name: v.string(),
+        },
+        handler: async (ctx, args) => {
+          return await this.getNpmOrg(ctx, args.name);
         },
       }),
     };

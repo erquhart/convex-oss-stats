@@ -48,26 +48,31 @@ export declare const components: {
         { owner: string },
         any
       >;
+      getNpmOrg: FunctionReference<"query", "internal", { name: string }, any>;
       sync: FunctionReference<
         "action",
         "internal",
-        { githubOwners: Array<string>; personalAccessToken: string },
+        {
+          githubAccessToken: string;
+          githubOwners: Array<string>;
+          npmOrgs: Array<string>;
+        },
         any
       >;
       updateGithubOwner: FunctionReference<
         "mutation",
         "internal",
-        { contributorsCount?: number; owner: string; stars?: number },
+        { contributorCount?: number; owner: string; starCount?: number },
         any
       >;
       updateGithubRepoStars: FunctionReference<
         "mutation",
         "internal",
         {
+          githubAccessToken: string;
           name: string;
           owner: string;
-          personalAccessToken: string;
-          stars?: number;
+          starCount?: number;
         },
         any
       >;
@@ -76,12 +81,24 @@ export declare const components: {
         "internal",
         {
           repos: Array<{
-            contributorsCount: number;
+            contributorCount: number;
             name: string;
             owner: string;
-            stars: number;
+            starCount: number;
           }>;
         },
+        any
+      >;
+      updateNpmOrg: FunctionReference<
+        "mutation",
+        "internal",
+        { downloadCount: number; name: string },
+        any
+      >;
+      updateNpmPackages: FunctionReference<
+        "mutation",
+        "internal",
+        { packages: Array<{ downloadCount: number; name: string }> },
         any
       >;
     };

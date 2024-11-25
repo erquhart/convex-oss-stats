@@ -5,8 +5,8 @@ export default defineSchema({
   githubOwners: defineTable({
     name: v.string(),
     nameNormalized: v.string(),
-    stars: v.number(),
-    contributorsCount: v.number(),
+    starCount: v.number(),
+    contributorCount: v.number(),
     updatedAt: v.number(),
   }).index("name", ["nameNormalized"]),
   githubRepos: defineTable({
@@ -14,8 +14,18 @@ export default defineSchema({
     ownerNormalized: v.string(),
     name: v.string(),
     nameNormalized: v.string(),
-    stars: v.number(),
-    contributorsCount: v.number(),
+    starCount: v.number(),
+    contributorCount: v.number(),
     updatedAt: v.number(),
   }).index("owner_name", ["ownerNormalized", "nameNormalized"]),
+  npmOrgs: defineTable({
+    name: v.string(),
+    downloadCount: v.number(),
+    updatedAt: v.number(),
+  }).index("name", ["name"]),
+  npmPackages: defineTable({
+    name: v.string(),
+    downloadCount: v.number(),
+    updatedAt: v.number(),
+  }).index("name", ["name"]),
 });

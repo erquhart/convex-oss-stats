@@ -87,6 +87,12 @@
     "@convex-dev/crons": "^0.1.5",
     "@octokit/graphql": "^8.1.1",
     "@octokit/graphql-schema": "^15.25.0",
-    "octokit": "^4.0.2"
+    "cheerio": "^1.0.0",
+    "date-fns": "^4.1.0",
+    "nano": "^10.1.4",
+    "npm-api": "^1.0.1",
+    "octokit": "^4.0.2",
+    "p-limit": "^6.1.0",
+    "remeda": "^2.17.3"
   }
 }

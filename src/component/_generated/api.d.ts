@@ -9,6 +9,7 @@
  */
 
 import type * as lib from "../lib.js";
+import type * as libNode from "../libNode.js";
 
 import type {
   ApiFromModules,
@@ -25,6 +26,7 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   lib: typeof lib;
+  libNode: typeof libNode;
 }>;
 export type Mounts = {
   lib: {
@@ -34,26 +36,31 @@ export type Mounts = {
       { owner: string },
       any
     >;
+    getNpmOrg: FunctionReference<"query", "public", { name: string }, any>;
     sync: FunctionReference<
       "action",
       "public",
-      { githubOwners: Array<string>; personalAccessToken: string },
+      {
+        githubAccessToken: string;
+        githubOwners: Array<string>;
+        npmOrgs: Array<string>;
+      },
       any
     >;
     updateGithubOwner: FunctionReference<
       "mutation",
       "public",
-      { contributorsCount?: number; owner: string; stars?: number },
+      { contributorCount?: number; owner: string; starCount?: number },
       any
     >;
     updateGithubRepoStars: FunctionReference<
       "mutation",
       "public",
       {
+        githubAccessToken: string;
         name: string;
         owner: string;
-        personalAccessToken: string;
-        stars?: number;
+        starCount?: number;
       },
       any
     >;
@@ -62,12 +69,24 @@ export type Mounts = {
       "public",
       {
         repos: Array<{
-          contributorsCount: number;
+          contributorCount: number;
           name: string;
           owner: string;
-          stars: number;
+          starCount: number;
         }>;
       },
+      any
+    >;
+    updateNpmOrg: FunctionReference<
+      "mutation",
+      "public",
+      { downloadCount: number; name: string },
+      any
+    >;
+    updateNpmPackages: FunctionReference<
+      "mutation",
+      "public",
+      { packages: Array<{ downloadCount: number; name: string }> },
       any
     >;
   };
