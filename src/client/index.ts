@@ -18,6 +18,7 @@ export class OssStats {
   public githubWebhookSecret: string;
   public githubOwners: string[];
   public npmOrgs: string[];
+  public minStars: number;
   constructor(
     public component: UseApi<typeof api>,
     public options?: {
@@ -25,6 +26,7 @@ export class OssStats {
       githubWebhookSecret?: string;
       githubOwners?: string[];
       npmOrgs?: string[];
+      minStars?: number;
     }
   ) {
     this.githubAccessToken =
@@ -33,6 +35,7 @@ export class OssStats {
       options?.githubWebhookSecret ?? process.env.GITHUB_WEBHOOK_SECRET!;
     this.githubOwners = options?.githubOwners ?? [];
     this.npmOrgs = options?.npmOrgs ?? [];
+    this.minStars = options?.minStars ?? 1;
     if (!this.githubAccessToken) {
       throw new Error("GITHUB_ACCESS_TOKEN is required");
     }
@@ -80,6 +83,7 @@ export class OssStats {
       githubAccessToken: this.githubAccessToken,
       githubOwners: this.githubOwners,
       npmOrgs: this.npmOrgs,
+      minStars: this.minStars,
     });
   }
 

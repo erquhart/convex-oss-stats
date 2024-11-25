@@ -41,6 +41,7 @@ export type Mounts = {
       {
         githubAccessToken: string;
         githubOwners: Array<string>;
+        minStars: number;
         npmOrgs: Array<string>;
       },
       any

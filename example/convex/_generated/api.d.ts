@@ -55,6 +55,7 @@ export declare const components: {
         {
           githubAccessToken: string;
           githubOwners: Array<string>;
+          minStars: number;
           npmOrgs: Array<string>;
         },
         any

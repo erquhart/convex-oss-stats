@@ -35,57 +35,68 @@ const getGithubRepoPageData = async (owner: string, name: string) => {
 const syncGithub = async (
   ctx: GenericActionCtx<DataModel>,
   githubAccessToken: string,
-  githubOwners: string[]
+  githubOwners: string[],
+  minStars: number
 ) => {
   const octokit = new Octokit({ auth: githubAccessToken });
-  for (const owner of githubOwners) {
-    const user = await octokit.rest.users.getByUsername({ username: owner });
-    await ctx.runMutation(api.lib.updateGithubOwner, {
-      owner: user.data.login,
-    });
-    const isOrg = user.data.type === "Organization";
-    const iterator = isOrg
-      ? octokit.paginate.iterator(octokit.rest.repos.listForOrg, {
-          org: owner,
-          per_page: 30,
-        })
-      : octokit.paginate.iterator(octokit.rest.repos.listForUser, {
+  const ownerLimit = pLimit(5);
+  await Promise.all(
+    githubOwners.map((owner) =>
+      ownerLimit(async () => {
+        const user = await octokit.rest.users.getByUsername({
           username: owner,
-          per_page: 30,
         });
-    let ownerStars = 0;
-    let ownerContributors = 0;
-    let ownerDependentCount = 0;
-    for await (const { data: repos } of iterator) {
-      const reposWithContributors = [];
-      for (const repo of repos) {
-        const pageData = await getGithubRepoPageData(owner, repo.name);
-        reposWithContributors.push({
-          ...repo,
-          contributorsCount: pageData.contributorCount,
-          dependentCount: pageData.dependentCount,
+        await ctx.runMutation(api.lib.updateGithubOwner, {
+          owner: user.data.login,
         });
-        ownerStars += repo.stargazers_count ?? 0;
-        ownerContributors += pageData.contributorCount;
-        ownerDependentCount += pageData.dependentCount;
-      }
-      await ctx.runMutation(api.lib.updateGithubRepos, {
-        repos: reposWithContributors.map((repo) => ({
-          owner: repo.owner.login,
-          name: repo.name,
-          starCount: repo.stargazers_count ?? 0,
-          contributorCount: repo.contributorsCount,
-          dependentCount: repo.dependentCount,
-        })),
-      });
-    }
-    await ctx.runMutation(api.lib.updateGithubOwner, {
-      owner: user.data.login,
-      starCount: ownerStars,
-      contributorCount: ownerContributors,
-      dependentCount: ownerDependentCount,
-    });
-  }
+        const isOrg = user.data.type === "Organization";
+        const iterator = isOrg
+          ? octokit.paginate.iterator(octokit.rest.repos.listForOrg, {
+              org: owner,
+              per_page: 100,
+            })
+          : octokit.paginate.iterator(octokit.rest.repos.listForUser, {
+              username: owner,
+              per_page: 100,
+            });
+        let ownerStars = 0;
+        let ownerContributors = 0;
+        let ownerDependentCount = 0;
+        for await (const { data: repos } of iterator) {
+          const reposWithContributors = [];
+          for (const repo of repos) {
+            if ((repo.stargazers_count ?? 0) < minStars) {
+              continue;
+            }
+            const pageData = await getGithubRepoPageData(owner, repo.name);
+            reposWithContributors.push({
+              ...repo,
+              contributorsCount: pageData.contributorCount,
+              dependentCount: pageData.dependentCount,
+            });
+            ownerStars += repo.stargazers_count ?? 0;
+            ownerContributors += pageData.contributorCount;
+            ownerDependentCount += pageData.dependentCount;
+          }
+          await ctx.runMutation(api.lib.updateGithubRepos, {
+            repos: reposWithContributors.map((repo) => ({
+              owner: repo.owner.login,
+              name: repo.name,
+              starCount: repo.stargazers_count ?? 0,
+              contributorCount: repo.contributorsCount,
+              dependentCount: repo.dependentCount,
+            })),
+          });
+        }
+        await ctx.runMutation(api.lib.updateGithubOwner, {
+          owner: user.data.login,
+          starCount: ownerStars,
+          contributorCount: ownerContributors,
+          dependentCount: ownerDependentCount,
+        });
+      })
+    )
+  );
 };
 
 const syncNpm = async (ctx: GenericActionCtx<DataModel>, npmOrgs: string[]) => {
@@ -379,10 +390,11 @@ export const sync = action({
     githubAccessToken: v.string(),
     githubOwners: v.array(v.string()),
     npmOrgs: v.array(v.string()),
+    minStars: v.number(),
   },
   handler: async (ctx, args) => {
     await Promise.all([
-      syncGithub(ctx, args.githubAccessToken, args.githubOwners),
+      syncGithub(ctx, args.githubAccessToken, args.githubOwners, args.minStars),
       syncNpm(ctx, args.npmOrgs),
     ]);
     const cron = await crons.get(ctx, { name: "sync" });
@@ -397,6 +409,7 @@ export const sync = action({
         githubAccessToken: args.githubAccessToken,
         githubOwners: args.githubOwners,
         npmOrgs: args.npmOrgs,
+        minStars: args.minStars,
       },
       "sync"
     );
