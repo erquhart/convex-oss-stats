@@ -9,7 +9,6 @@
  */
 
 import type * as lib from "../lib.js";
-import type * as libNode from "../libNode.js";
 
 import type {
   ApiFromModules,
@@ -26,7 +25,6 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   lib: typeof lib;
-  libNode: typeof libNode;
 }>;
 export type Mounts = {
   lib: {
@@ -50,7 +48,12 @@ export type Mounts = {
     updateGithubOwner: FunctionReference<
       "mutation",
       "public",
-      { contributorCount?: number; owner: string; starCount?: number },
+      {
+        contributorCount?: number;
+        dependentCount?: number;
+        owner: string;
+        starCount?: number;
+      },
       any
     >;
     updateGithubRepoStars: FunctionReference<
@@ -70,6 +73,7 @@ export type Mounts = {
       {
         repos: Array<{
           contributorCount: number;
+          dependentCount: number;
           name: string;
           owner: string;
           starCount: number;

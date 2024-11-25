@@ -7,6 +7,7 @@ export default defineSchema({
     nameNormalized: v.string(),
     starCount: v.number(),
     contributorCount: v.number(),
+    dependentCount: v.number(),
     updatedAt: v.number(),
   }).index("name", ["nameNormalized"]),
   githubRepos: defineTable({
@@ -16,6 +17,7 @@ export default defineSchema({
     nameNormalized: v.string(),
     starCount: v.number(),
     contributorCount: v.number(),
+    dependentCount: v.number(),
     updatedAt: v.number(),
   }).index("owner_name", ["ownerNormalized", "nameNormalized"]),
   npmOrgs: defineTable({

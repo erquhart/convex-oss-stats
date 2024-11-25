@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { Octokit } from "octokit";
+import * as cheerio from "cheerio";
 import { Crons } from "@convex-dev/crons";
 import { action, mutation, query } from "./_generated/server";
 import { api, components } from "./_generated/api";
@@ -10,25 +11,25 @@ import { chunk } from "remeda";
 
 const crons = new Crons(components.crons);
 
-const getGithubRepoContributorsCount = async (
-  octokit: Octokit,
-  owner: string,
-  name: string
-) => {
-  const iterator = octokit.paginate.iterator(
-    octokit.rest.repos.listContributors,
-    {
-      owner,
-      repo: name,
-      per_page: 100,
-      anon: "1",
-    }
+const getGithubRepoPageData = async (owner: string, name: string) => {
+  const html = await fetch(`https://github.com/${owner}/${name}`).then((res) =>
+    res.text()
   );
-  let totalContributors = 0;
-  for await (const { data: contributors } of iterator) {
-    totalContributors += contributors.length;
-  }
-  return totalContributors;
+  const $ = cheerio.load(html);
+  const parseNumber = (str = "") => Number(str.replace(/,/g, ""));
+  const selectData = (hrefSubstring: string) => {
+    const result = $(`* a[href*="${hrefSubstring}"] > span`)
+      .filter((_, el) => {
+        const title = $(el).attr("title");
+        return !!parseNumber(title);
+      })
+      .attr("title");
+    return result ? parseNumber(result) : 0;
+  };
+  return {
+    contributorCount: selectData("contributors"),
+    dependentCount: selectData("dependents"),
+  };
 };
 
 const syncGithub = async (
@@ -54,24 +55,19 @@ const syncGithub = async (
         });
     let ownerStars = 0;
     let ownerContributors = 0;
+    let ownerDependentCount = 0;
     for await (const { data: repos } of iterator) {
-      // Pulling down a massive amount of data to count contributors is
-      // ridiculous and time consuming. We should probably just scrape it
-      // since the data is always stale and we'll be scraping repo
-      // dependencies anyway.
       const reposWithContributors = [];
       for (const repo of repos) {
-        const contributorsCount = await getGithubRepoContributorsCount(
-          octokit,
-          owner,
-          repo.name
-        );
+        const pageData = await getGithubRepoPageData(owner, repo.name);
         reposWithContributors.push({
           ...repo,
-          contributorsCount,
+          contributorsCount: pageData.contributorCount,
+          dependentCount: pageData.dependentCount,
         });
         ownerStars += repo.stargazers_count ?? 0;
-        ownerContributors += contributorsCount;
+        ownerContributors += pageData.contributorCount;
+        ownerDependentCount += pageData.dependentCount;
       }
       await ctx.runMutation(api.lib.updateGithubRepos, {
         repos: reposWithContributors.map((repo) => ({
@@ -79,6 +75,7 @@ const syncGithub = async (
           name: repo.name,
           starCount: repo.stargazers_count ?? 0,
           contributorCount: repo.contributorsCount,
+          dependentCount: repo.dependentCount,
         })),
       });
     }
@@ -86,6 +83,7 @@ const syncGithub = async (
       owner: user.data.login,
       starCount: ownerStars,
       contributorCount: ownerContributors,
+      dependentCount: ownerDependentCount,
     });
   }
 };
@@ -243,6 +241,7 @@ export const updateGithubRepos = mutation({
         name: v.string(),
         starCount: v.number(),
         contributorCount: v.number(),
+        dependentCount: v.number(),
       })
     ),
   },
@@ -270,6 +269,7 @@ export const updateGithubRepos = mutation({
       await ctx.db.insert("githubRepos", {
         ...repo,
         contributorCount: repo.contributorCount,
+        dependentCount: repo.dependentCount,
         ownerNormalized: repo.owner.toLowerCase(),
         nameNormalized: repo.name.toLowerCase(),
         updatedAt: Date.now(),
@@ -283,6 +283,7 @@ export const updateGithubOwner = mutation({
     owner: v.string(),
     starCount: v.optional(v.number()),
     contributorCount: v.optional(v.number()),
+    dependentCount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const existingOwner = await ctx.db
@@ -296,6 +297,7 @@ export const updateGithubOwner = mutation({
         starCount: args.starCount ?? existingOwner.starCount,
         contributorCount:
           args.contributorCount ?? existingOwner.contributorCount,
+        dependentCount: args.dependentCount ?? existingOwner.dependentCount,
         updatedAt: Date.now(),
       });
       return;
@@ -305,6 +307,7 @@ export const updateGithubOwner = mutation({
       nameNormalized: args.owner.toLowerCase(),
       starCount: args.starCount ?? 0,
       contributorCount: args.contributorCount ?? 0,
+      dependentCount: args.dependentCount ?? 0,
       updatedAt: Date.now(),
     });
   },
@@ -339,23 +342,20 @@ export const updateGithubRepoStars = mutation({
       )
       .unique();
     if (!repo) {
-      const contributorsCount = await getGithubRepoContributorsCount(
-        new Octokit({ auth: args.githubAccessToken }),
-        args.owner,
-        args.name
-      );
+      const pageData = await getGithubRepoPageData(args.owner, args.name);
       await ctx.db.insert("githubRepos", {
         owner: args.owner,
         ownerNormalized: args.owner.toLowerCase(),
         name: args.name,
         nameNormalized: args.name.toLowerCase(),
         starCount: args.starCount ?? 0,
-        contributorCount: contributorsCount,
+        contributorCount: pageData.contributorCount,
+        dependentCount: pageData.dependentCount,
         updatedAt: Date.now(),
       });
       await ctx.db.patch(owner._id, {
         starCount: owner.starCount + (args.starCount ?? 0),
-        contributorCount: owner.contributorCount + contributorsCount,
+        contributorCount: owner.contributorCount + pageData.contributorCount,
         updatedAt: Date.now(),
       });
       return;
