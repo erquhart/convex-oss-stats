@@ -1,13 +1,13 @@
 {
   "name": "@erquhart/convex-oss-stats",
-  "description": "A stats component for Convex.",
+  "description": "A Convex Component for syncing and rendering open source project data.",
   "repository": "github:get-convex/oss-stats",
   "homepage": "https://github.com/get-convex/oss-stats#readme",
   "bugs": {
     "email": "support@convex.dev",
     "url": "https://github.com/get-convex/oss-stats/issues"
   },
-  "version": "0.1.2",
+  "version": "0.2.0",
   "license": "Apache-2.0",
   "keywords": [
     "convex",
@@ -68,7 +68,7 @@
   },
   "peerDependencies": {
     "convex": "~1.16.5 || ~1.17.0",
-    "react": "^18.3.1"
+    "react": "^17.0.2 || ^18.0.0 || ^19.0.0-0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
