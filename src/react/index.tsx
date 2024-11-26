@@ -1,5 +1,4 @@
 import { useState } from "react";
-
 import { useEffect } from "react";
 
 const useFakeCounter = ({
@@ -7,11 +6,13 @@ const useFakeCounter = ({
   nextValue,
   startTime,
   endTime,
+  intervalMs = 100,
 }: {
   value?: number;
   nextValue?: number;
   startTime?: number;
   endTime?: number;
+  intervalMs?: number;
 }) => {
   const [currentValue, setCurrentValue] = useState(value);
   useEffect(() => {
@@ -28,9 +29,9 @@ const useFakeCounter = ({
       const duration = endTime - startTime;
       const rate = diff / duration;
       setCurrentValue(Math.round(value + rate * (Date.now() - startTime)));
-    }, 100);
+    }, intervalMs);
     return () => clearInterval(interval);
-  }, [value, nextValue, startTime, endTime]);
+  }, [value, nextValue, startTime, endTime, intervalMs]);
   return currentValue;
 };
 
@@ -41,12 +42,13 @@ export const useNpmDownloadCounter = (
     updatedAt: number;
   } | null
 ) => {
+  const { downloadCount, dayOfWeekAverages, updatedAt } = npmPackageOrOrg ?? {};
+  const nextDayOfWeekAverage =
+    dayOfWeekAverages?.[(new Date().getDay() + 8) % 7] ?? 0;
   return useFakeCounter({
-    value: npmPackageOrOrg?.downloadCount,
-    nextValue:
-      (npmPackageOrOrg?.downloadCount ?? 0) +
-      (npmPackageOrOrg?.dayOfWeekAverages?.[0] ?? 0),
-    startTime: npmPackageOrOrg?.updatedAt,
-    endTime: (npmPackageOrOrg?.updatedAt ?? 0) + 1000 * 60 * 60 * 24,
+    value: downloadCount,
+    nextValue: (downloadCount ?? 0) + nextDayOfWeekAverage,
+    startTime: updatedAt,
+    endTime: (updatedAt ?? 0) + 1000 * 60 * 60 * 24,
   });
 };
