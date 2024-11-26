@@ -135,12 +135,15 @@ const syncNpm = async (ctx: GenericActionCtx<DataModel>, npmOrgs: string[]) => {
         const packagesWithDownloadCount = await Promise.all(
           packages.map((pkg) =>
             packageLimit(async () => {
-              const nextDate = new Date(pkg.created);
+              let nextDate = new Date(pkg.created);
               let totalDownloadCount = 0;
               let hasMore = true;
               while (hasMore) {
                 const from = nextDate.toISOString().substring(0, 10);
                 nextDate.setDate(nextDate.getDate() + 17 * 30);
+                if (nextDate.toISOString().substring(0, 10) > currentDateIso) {
+                  nextDate = new Date();
+                }
                 const to = nextDate.toISOString().substring(0, 10);
                 const response = await fetch(
                   `https://api.npmjs.org/downloads/range/${from}:${to}/${pkg.name}`
@@ -158,7 +161,31 @@ const syncNpm = async (ctx: GenericActionCtx<DataModel>, npmOrgs: string[]) => {
                 nextDate.setDate(nextDate.getDate() + 1);
                 hasMore = json.end < currentDateIso;
               }
-              return { name: pkg.name, downloadCount: totalDownloadCount };
+              nextDate.setDate(nextDate.getDate() - 30);
+              const from = nextDate.toISOString().substring(0, 10);
+              nextDate.setDate(nextDate.getDate() + 30);
+              const to = nextDate.toISOString().substring(0, 10);
+              const lastPageResponse = await fetch(
+                `https://api.npmjs.org/downloads/range/${from}:${to}/${pkg.name}`
+              );
+              const lastPageJson: {
+                end: string;
+                downloads: { day: string; downloads: number }[];
+              } = await lastPageResponse.json();
+              // Create array of week of day averages, 0 = Sunday
+              const dayOfWeekAverages = Array(7)
+                .fill(0)
+                .map((_, idx) => {
+                  const total = lastPageJson.downloads
+                    .filter((day) => new Date(day.day).getDay() === idx)
+                    .reduce((acc, cur) => acc + cur.downloads, 0);
+                  return Math.round(total / 4);
+                });
+              return {
+                name: pkg.name,
+                downloadCount: totalDownloadCount,
+                dayOfWeekAverages,
+              };
             })
           )
         );
@@ -174,9 +201,16 @@ const syncNpm = async (ctx: GenericActionCtx<DataModel>, npmOrgs: string[]) => {
             acc + cur.downloadCount,
           0
         );
+        const orgDayOfWeekAverages = packagesWithDownloadCount.reduce(
+          (acc: number[], cur: { dayOfWeekAverages: number[] }) => {
+            return acc.map((avg, idx) => avg + cur.dayOfWeekAverages[idx]);
+          },
+          Array(7).fill(0)
+        );
         await ctx.runMutation(api.lib.updateNpmOrg, {
           name: orgName,
           downloadCount: orgTotalDownloadCount,
+          dayOfWeekAverages: orgDayOfWeekAverages,
         });
       })
     )
@@ -187,6 +221,7 @@ export const updateNpmOrg = mutation({
   args: {
     name: v.string(),
     downloadCount: v.number(),
+    dayOfWeekAverages: v.array(v.number()),
   },
   handler: async (ctx, args) => {
     const org = await ctx.db
@@ -197,6 +232,7 @@ export const updateNpmOrg = mutation({
       await ctx.db.insert("npmOrgs", {
         name: args.name,
         downloadCount: args.downloadCount,
+        dayOfWeekAverages: args.dayOfWeekAverages,
         updatedAt: Date.now(),
       });
       return;
@@ -217,6 +253,7 @@ export const updateNpmPackages = mutation({
       v.object({
         name: v.string(),
         downloadCount: v.number(),
+        dayOfWeekAverages: v.array(v.number()),
       })
     ),
   },
@@ -232,6 +269,7 @@ export const updateNpmPackages = mutation({
       if (existingPkg) {
         await ctx.db.patch(existingPkg._id, {
           downloadCount: pkg.downloadCount,
+          dayOfWeekAverages: pkg.dayOfWeekAverages,
           updatedAt: Date.now(),
         });
         return;

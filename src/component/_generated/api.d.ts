@@ -85,13 +85,19 @@ export type Mounts = {
     updateNpmOrg: FunctionReference<
       "mutation",
       "public",
-      { downloadCount: number; name: string },
+      { dayOfWeekAverages: Array<number>; downloadCount: number; name: string },
       any
     >;
     updateNpmPackages: FunctionReference<
       "mutation",
       "public",
-      { packages: Array<{ downloadCount: number; name: string }> },
+      {
+        packages: Array<{
+          dayOfWeekAverages: Array<number>;
+          downloadCount: number;
+          name: string;
+        }>;
+      },
       any
     >;
   };

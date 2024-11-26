@@ -7,7 +7,7 @@
     "email": "support@convex.dev",
     "url": "https://github.com/get-convex/oss-stats/issues"
   },
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "Apache-2.0",
   "keywords": [
     "convex",
@@ -49,13 +49,13 @@
     "./react": {
       "import": {
         "@convex-dev/component-source": "./src/react/index.ts",
-        "types": "./dist/esm/react.d.ts",
-        "default": "./dist/esm/react.js"
+        "types": "./dist/esm/react/index.d.ts",
+        "default": "./dist/esm/react/index.js"
       },
       "require": {
         "@convex-dev/component-source": "./src/react/index.ts",
-        "types": "./dist/commonjs/react.d.ts",
-        "default": "./dist/commonjs/react.js"
+        "types": "./dist/commonjs/react/index.d.ts",
+        "default": "./dist/commonjs/react/index.js"
       }
     },
     "./convex.config": {
@@ -67,11 +67,13 @@
     }
   },
   "peerDependencies": {
-    "convex": "~1.16.5 || ~1.17.0"
+    "convex": "~1.16.5 || ~1.17.0",
+    "react": "^18.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
     "@types/node": "^18.17.0",
+    "@types/react": "^18.3.12",
     "convex-test": "^0.0.33",
     "eslint": "^9.9.1",
     "globals": "^15.9.0",
@@ -89,6 +91,7 @@
     "@octokit/graphql-schema": "^15.25.0",
     "cheerio": "^1.0.0",
     "date-fns": "^4.1.0",
+    "framer-motion": "^11.11.17",
     "nano": "^10.1.4",
     "npm-api": "^1.0.1",
     "octokit": "^4.0.2",

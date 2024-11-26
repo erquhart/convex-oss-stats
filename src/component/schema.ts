@@ -23,11 +23,13 @@ export default defineSchema({
   npmOrgs: defineTable({
     name: v.string(),
     downloadCount: v.number(),
+    dayOfWeekAverages: v.array(v.number()),
     updatedAt: v.number(),
   }).index("name", ["name"]),
   npmPackages: defineTable({
     name: v.string(),
     downloadCount: v.number(),
+    dayOfWeekAverages: v.array(v.number()),
     updatedAt: v.number(),
   }).index("name", ["name"]),
 });
