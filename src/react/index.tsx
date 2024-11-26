@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useEffect } from "react";
 
 const useFakeCounter = ({
@@ -6,7 +6,7 @@ const useFakeCounter = ({
   nextValue,
   startTime,
   endTime,
-  intervalMs = 100,
+  intervalMs = 1000,
 }: {
   value?: number;
   nextValue?: number;
@@ -15,7 +15,8 @@ const useFakeCounter = ({
   intervalMs?: number;
 }) => {
   const [currentValue, setCurrentValue] = useState(value);
-  useEffect(() => {
+
+  const updateCurrentValue = useCallback(() => {
     if (
       typeof value !== "number" ||
       typeof nextValue !== "number" ||
@@ -24,14 +25,23 @@ const useFakeCounter = ({
     ) {
       return;
     }
-    const interval = setInterval(() => {
-      const diff = nextValue - value;
-      const duration = endTime - startTime;
-      const rate = diff / duration;
-      setCurrentValue(Math.round(value + rate * (Date.now() - startTime)));
-    }, intervalMs);
-    return () => clearInterval(interval);
-  }, [value, nextValue, startTime, endTime, intervalMs]);
+    const diff = nextValue - value;
+    const duration = endTime - startTime;
+    const rate = diff / duration;
+    setCurrentValue(Math.round(value + rate * (Date.now() - startTime)));
+  }, [value, nextValue, startTime, endTime]);
+
+  useEffect(() => {
+    // avoid initial delay
+    updateCurrentValue();
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(updateCurrentValue, intervalMs);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [updateCurrentValue, intervalMs]);
   return currentValue;
 };
 
