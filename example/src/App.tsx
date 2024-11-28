@@ -9,11 +9,11 @@ import {
 function App() {
   const githubOwner =
     useQuery(api.example.getGithubOwner, {
-      owner: "tanstack",
+      owner: "get-convex",
     }) ?? null;
   const npmOwner =
     useQuery(api.example.getNpmOrg, {
-      name: "tanstack",
+      name: "convex-dev",
     }) ?? null;
 
   // Source data for these two values are not possible to get live, so we use
