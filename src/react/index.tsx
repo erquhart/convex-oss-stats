@@ -15,13 +15,6 @@ const useFakeCounter = ({
   intervalMs?: number;
 }) => {
   const [currentValue, setCurrentValue] = useState(value);
-  console.log("useFakeCounter", {
-    value,
-    nextValue,
-    startTime,
-    endTime,
-    currentValue,
-  });
 
   const updateCurrentValue = useCallback(() => {
     if (
