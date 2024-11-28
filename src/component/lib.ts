@@ -10,25 +10,39 @@ import pLimit from "p-limit";
 import { chunk } from "remeda";
 
 const crons = new Crons(components.crons);
+const repoPageRetries = 3;
 
 const getGithubRepoPageData = async (owner: string, name: string) => {
-  const html = await fetch(`https://github.com/${owner}/${name}`).then((res) =>
-    res.text()
-  );
-  const $ = cheerio.load(html);
-  const parseNumber = (str = "") => Number(str.replace(/,/g, ""));
-  const selectData = (hrefSubstring: string) => {
-    const result = $(`* a[href*="${hrefSubstring}"] > span`)
-      .filter((_, el) => {
-        const title = $(el).attr("title");
-        return !!parseNumber(title);
-      })
-      .attr("title");
-    return result ? parseNumber(result) : 0;
-  };
+  // Some data, especially dependent count, randomly fails to load in the UI
+  let retries = repoPageRetries;
+  let contributorCount: number | undefined;
+  let dependentCount: number | undefined;
+  while (retries > 0) {
+    const html = await fetch(`https://github.com/${owner}/${name}`).then(
+      (res) => res.text()
+    );
+    const $ = cheerio.load(html);
+    const parseNumber = (str = "") => Number(str.replace(/,/g, ""));
+    const selectData = (hrefSubstring: string) => {
+      const result = $(`* a[href*="${hrefSubstring}"] > span`)
+        .filter((_, el) => {
+          const title = $(el).attr("title");
+          return !!parseNumber(title);
+        })
+        .attr("title");
+      return result ? parseNumber(result) : undefined;
+    };
+    contributorCount = selectData("contributors");
+    dependentCount = selectData("dependents");
+    if (contributorCount === undefined || dependentCount === undefined) {
+      retries--;
+      continue;
+    }
+    break;
+  }
   return {
-    contributorCount: selectData("contributors"),
-    dependentCount: selectData("dependents"),
+    contributorCount: contributorCount ?? 0,
+    dependentCount: dependentCount ?? 0,
   };
 };
 
@@ -43,9 +57,20 @@ const syncGithub = async (
   await Promise.all(
     githubOwners.map((owner) =>
       ownerLimit(async () => {
-        const user = await octokit.rest.users.getByUsername({
-          username: owner,
-        });
+        let user;
+        try {
+          user = await octokit.rest.users.getByUsername({
+            username: owner,
+          });
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (e: any) {
+          if (e.status === 404) {
+            console.error(`github owner ${owner} not found`);
+            return;
+          }
+          console.error(e);
+          return;
+        }
         await ctx.runMutation(api.lib.updateGithubOwner, {
           owner: user.data.login,
         });
@@ -63,21 +88,36 @@ const syncGithub = async (
         let ownerContributors = 0;
         let ownerDependentCount = 0;
         for await (const { data: repos } of iterator) {
-          const reposWithContributors = [];
-          for (const repo of repos) {
-            if ((repo.stargazers_count ?? 0) < minStars) {
-              continue;
-            }
-            const pageData = await getGithubRepoPageData(owner, repo.name);
-            reposWithContributors.push({
-              ...repo,
-              contributorsCount: pageData.contributorCount,
-              dependentCount: pageData.dependentCount,
-            });
-            ownerStars += repo.stargazers_count ?? 0;
-            ownerContributors += pageData.contributorCount;
-            ownerDependentCount += pageData.dependentCount;
-          }
+          const reposWithContributors: {
+            owner: {
+              login: string;
+            };
+            name: string;
+            stargazers_count: number;
+            contributorsCount: number;
+            dependentCount: number;
+          }[] = [];
+          const repoLimit = pLimit(4);
+          await Promise.all(
+            repos.map((repo) =>
+              repoLimit(async () => {
+                if ((repo.stargazers_count ?? 0) < minStars) {
+                  return;
+                }
+                const pageData = await getGithubRepoPageData(owner, repo.name);
+                reposWithContributors.push({
+                  owner: repo.owner,
+                  name: repo.name,
+                  stargazers_count: repo.stargazers_count ?? 0,
+                  contributorsCount: pageData.contributorCount,
+                  dependentCount: pageData.dependentCount,
+                });
+                ownerStars += repo.stargazers_count ?? 0;
+                ownerContributors += pageData.contributorCount;
+                ownerDependentCount += pageData.dependentCount;
+              })
+            )
+          );
           await ctx.runMutation(api.lib.updateGithubRepos, {
             repos: reposWithContributors.map((repo) => ({
               owner: repo.owner.login,
@@ -117,11 +157,22 @@ const syncNpm = async (ctx: GenericActionCtx<DataModel>, npmOrgs: string[]) => {
             }
           );
           const json: {
-            packages: {
+            packages?: {
               objects: { name: string; created: { ts: number } }[];
               urls: { next: string };
             };
+            message?: string;
           } = await response.json();
+          if (!json.packages) {
+            if (json.message === "NotFoundError: Scope not found") {
+              console.error(`npm org ${orgName} not found`);
+            } else {
+              console.error("syncNpm", {
+                json,
+              });
+            }
+            continue;
+          }
           nextUrlSuffix = json.packages.urls.next;
           packages.push(
             ...json.packages.objects.map((pkg) => ({
@@ -282,6 +333,25 @@ export const updateNpmPackages = mutation({
   },
 });
 
+const getDependentCountPrevious = (existingRepo: {
+  dependentCountPrevious?: {
+    count: number;
+    updatedAt: number;
+  };
+  dependentCount: number;
+}) => {
+  const updatedAt = Date.now();
+  const dependentCountPreviousDate =
+    existingRepo.dependentCountPrevious?.updatedAt;
+  return dependentCountPreviousDate &&
+    updatedAt - dependentCountPreviousDate < 55 * 60 * 1000
+    ? existingRepo.dependentCountPrevious
+    : {
+        count: existingRepo.dependentCount,
+        updatedAt,
+      };
+};
+
 export const updateGithubRepos = mutation({
   args: {
     repos: v.array(
@@ -291,6 +361,12 @@ export const updateGithubRepos = mutation({
         starCount: v.number(),
         contributorCount: v.number(),
         dependentCount: v.number(),
+        dependentCountPrevious: v.optional(
+          v.object({
+            count: v.number(),
+            updatedAt: v.number(),
+          })
+        ),
       })
     ),
   },
@@ -310,7 +386,10 @@ export const updateGithubRepos = mutation({
       if (existingRepo) {
         await ctx.db.patch(existingRepo._id, {
           starCount: repo.starCount,
-          contributorCount: repo.contributorCount,
+          contributorCount:
+            repo.contributorCount || existingRepo.contributorCount,
+          dependentCount: repo.dependentCount || existingRepo.dependentCount,
+          dependentCountPrevious: getDependentCountPrevious(existingRepo),
           updatedAt: Date.now(),
         });
         return;
@@ -345,8 +424,9 @@ export const updateGithubOwner = mutation({
       await ctx.db.patch(existingOwner._id, {
         starCount: args.starCount ?? existingOwner.starCount,
         contributorCount:
-          args.contributorCount ?? existingOwner.contributorCount,
-        dependentCount: args.dependentCount ?? existingOwner.dependentCount,
+          args.contributorCount || existingOwner.contributorCount,
+        dependentCount: args.dependentCount || existingOwner.dependentCount,
+        dependentCountPrevious: getDependentCountPrevious(existingOwner),
         updatedAt: Date.now(),
       });
       return;
@@ -391,7 +471,13 @@ export const updateGithubRepoStars = mutation({
       )
       .unique();
     if (!repo) {
+      // Get all data since this repo is new
       const pageData = await getGithubRepoPageData(args.owner, args.name);
+      if (!pageData) {
+        throw new Error(
+          `failed to get page data for ${args.owner}/${args.name}`
+        );
+      }
       await ctx.db.insert("githubRepos", {
         owner: args.owner,
         ownerNormalized: args.owner.toLowerCase(),

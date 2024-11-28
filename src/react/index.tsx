@@ -15,6 +15,13 @@ const useFakeCounter = ({
   intervalMs?: number;
 }) => {
   const [currentValue, setCurrentValue] = useState(value);
+  console.log("useFakeCounter", {
+    value,
+    nextValue,
+    startTime,
+    endTime,
+    currentValue,
+  });
 
   const updateCurrentValue = useCallback(() => {
     if (
@@ -23,6 +30,7 @@ const useFakeCounter = ({
       typeof startTime !== "number" ||
       typeof endTime !== "number"
     ) {
+      setCurrentValue(value);
       return;
     }
     const diff = nextValue - value;
@@ -60,5 +68,36 @@ export const useNpmDownloadCounter = (
     nextValue: (downloadCount ?? 0) + nextDayOfWeekAverage,
     startTime: updatedAt,
     endTime: (updatedAt ?? 0) + 1000 * 60 * 60 * 24,
+  });
+};
+
+export const useGithubDependentCounter = (
+  githubRepoOrOwner: {
+    dependentCount: number;
+    dependentCountPrevious?: {
+      count: number;
+      updatedAt: number;
+    };
+    updatedAt: number;
+  } | null
+) => {
+  const { dependentCount, dependentCountPrevious, updatedAt } =
+    githubRepoOrOwner ?? {};
+  return useFakeCounter({
+    value: dependentCount,
+    nextValue:
+      dependentCount &&
+      dependentCountPrevious?.count &&
+      dependentCountPrevious.count < dependentCount
+        ? Math.round(
+            (dependentCount + dependentCount - dependentCountPrevious.count) *
+              0.8
+          )
+        : undefined,
+    startTime: updatedAt,
+    endTime:
+      updatedAt && dependentCountPrevious?.updatedAt
+        ? updatedAt + updatedAt - dependentCountPrevious.updatedAt
+        : undefined,
   });
 };

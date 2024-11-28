@@ -1,152 +1,65 @@
-# Convex Component Template
+# Convex OSS Stats Component
 
-This is a Convex component, ready to be published on npm.
+[![npm version](https://badge.fury.io/js/@convex-dev%2Foss-stats.svg)](https://badge.fury.io/js/@convex-dev%2Foss-stats)
 
-To create your own component:
-
-1. Find and replace "Counter" to your component's Name.
-1. Find and replace "counter" to your component's name.
-1. Write code in src/component for your component.
-1. Write code in src/client for your thick client.
-1. Write example usage in example/convex/example.ts.
-1. Delete the text in this readme until `---` and flesh out the README.
-
-It is safe to find & replace "counter" project-wide.
-
-To develop your component run a dev process in the example project.
-
-```
-npm i
-cd example
-npm i
-npx convex dev
-```
-
-Modify the schema and index files in src/component/ to define your component.
-
-Write a client for using this component in src/client/index.ts.
-
-If you won't be adding frontend code (e.g. React components) to this
-component you can delete the following:
-
-- "prepack" and "postpack" scripts of package.json
-- "./react" exports in package.json
-- the "src/react/" directory
-- the "node10stubs.mjs" file
-
-### Component Directory structure
-
-```
-.
-├── README.md           documentation of your component
-├── package.json        component name, version number, other metadata
-├── package-lock.json   Components are like libraries, package-lock.json
-│                       is .gitignored and ignored by consumers.
-├── src
-│   ├── component/
-│   │   ├── _generated/ Files here are generated.
-│   │   ├── convex.config.ts  Name your component here and use other components
-│   │   ├── index.ts    Define functions here and in new files in this directory
-│   │   └── schema.ts   schema specific to this component
-│   ├── client/index.ts "Thick" client code goes here.
-│   └── react/          Code intended to be used on the frontend goes here.
-│       │               Your are free to delete this if this component
-│       │               does not provide code.
-│       └── index.ts
-├── example/            example Convex app that uses this component
-│   │                   Run 'npx convex dev' from here during development.
-│   ├── package.json.ts Thick client code goes here.
-│   └── convex/
-│       ├── _generated/
-│       ├── convex.config.ts  Imports and uses this component
-│       ├── myFunctions.ts    Functions that use the component
-│       ├── schema.ts         Example app schema
-│       └── tsconfig.json
-│  
-├── dist/               Publishing artifacts will be created here.
-├── commonjs.json       Used during build by TypeScript.
-├── esm.json            Used during build by TypeScript.
-├── node10stubs.mjs     Script used during build for compatibility
-│                       with the Metro bundler used with React Native.
-├── eslint.config.mjs   Recommended lints for writing a component.
-│                       Feel free to customize it.
-└── tsconfig.json       Recommended tsconfig.json for writing a component.
-                        Some settings can be customized, some are required.
-```
-
-### Structure of a Convex Component
-
-A Convex components exposes the entry point convex.config.js. The on-disk
-location of this file must be a directory containing implementation files. These
-files should be compiled to ESM.
-The package.json should contain `"type": "module"` and the tsconfig.json should
-contain `"moduleResolution": "Bundler"` or `"Node16"` in order to import other
-component definitions.
-
-In addition to convex.config.js, a component typically exposes a client that
-wraps communication with the component for use in the Convex
-environment is typically exposed as a named export `MyComponentClient` or
-`MyComponent` imported from the root package.
-
-```
-import { MyComponentClient } from "my-convex-component";
-```
-
-When frontend code is included it is typically published at a subpath:
-
-```
-import { helper } from "my-convex-component/react";
-import { FrontendReactComponent } from "my-convex-component/react";
-```
-
-Frontend code should be compiled as CommonJS code as well as ESM and make use of
-subpackage stubs (see next section).
-
-If you do include frontend components, prefer peer dependencies to avoid using
-more than one version of e.g. React.
-
-### Support for Node10 module resolution
-
-The [Metro](https://reactnative.dev/docs/metro) bundler for React Native
-requires setting
-[`resolver.unstable_enablePackageExports`](https://metrobundler.dev/docs/package-exports/)
-in order to import code that lives in `dist/esm/react.js` from a path like
-`my-convex-component/react`.
-
-Authors of Convex component that provide frontend components are encouraged to
-support these legacy "Node10-style" module resolution algorithms by generating
-stub directories with special pre- and post-pack scripts.
-
----
-
-# Convex Counter Component
-
-[![npm version](https://badge.fury.io/js/@convex-dev%2Fcounter.svg)](https://badge.fury.io/js/@convex-dev%2Fcounter)
-
-**Note: Convex Components are currently in beta**
+**Note: Convex Components are currently in beta.**
 
 <!-- START: Include on https://convex.dev/components -->
 
-- [ ] What is some compelling syntax as a hook?
-- [ ] Why should you use this component?
-- [ ] Links to Stack / other resources?
+Keep GitHub and npm data for your open source projects synced to your Convex database.
 
-Found a bug? Feature request? [File it here](https://github.com/get-convex/counter/issues).
+```tsx
+// convex/stats.ts
+import { OssStats } from '@convex-dev/oss-stats'
+import { components } from './_generated/api'
 
-## Pre-requisite: Convex
+const ossStats = new OssStats(components.ossStats, {
+  githubOwners: ['tanstack'],
+  npmOrgs: ['tanstack'],
+})
 
-You'll need an existing Convex project to use the component.
-Convex is a hosted backend platform, including a database, serverless functions,
-and a ton more you can learn about [here](https://docs.convex.dev/get-started).
+export const { getGithubOwner } = ossStats.api()
 
-Run `npm create convex` or follow any of the [quickstarts](https://docs.convex.dev/home) to set one up.
+// src/OssStats.tsx
+import { useQuery } from 'convex/react'
+import { api } from '../convex/_generated/api'
+
+const OssStats = () => {
+  const githubOwner = useQuery(api.stats.getGithubOwner, {
+    owner: 'tanstack',
+  })
+
+  // This will update in realtime 🔥
+  return <div>{githubOwner.stars}</div>
+}
+```
+
+## Prerequisites
+
+### GitHub Account
+
+Create a GitHub account and get the following credentials:
+
+- **Access Token**
+  - Go to your GitHub account settings and generate a new access token - just
+    needs read access to public repositories.
+- **Webhook Secret**
+  - Go to your GitHub account settings and generate a new webhook secret.
+  - You'll need your webhook url, which will be your Convex deployment's HTTP
+    Actions URL (ends with `.convex.site`) followed by your polar event path
+    (default is `/events/polar`).
+  - You'll be able to choose which events to subscribe to. This component syncs
+
+### Convex App
+
+You'll need a Convex App to use the component. Follow any of the [Convex quickstarts](https://docs.convex.dev/home) to set one up.
 
 ## Installation
 
 Install the component package:
 
 ```ts
-npm install @convex-dev/counter
+npm install @convex-dev/polar
 ```
 
 Create a `convex.config.ts` file in your app's `convex/` folder and install the component by calling `use`:
@@ -154,25 +67,204 @@ Create a `convex.config.ts` file in your app's `convex/` folder and install the 
 ```ts
 // convex/convex.config.ts
 import { defineApp } from "convex/server";
-import counter from "@convex-dev/counter/convex.config";
+import polar from "@convex-dev/polar/convex.config";
 
 const app = defineApp();
-app.use(counter);
+app.use(polar);
 
 export default app;
 ```
 
-## Usage
+Set your API credentials:
+
+```sh
+npx convex env set POLAR_ACCESS_TOKEN=xxxxx
+npx convex env set POLAR_ORGANIZATION_ID=xxxxx
+npx convex env set POLAR_WEBHOOK_SECRET=xxxxx
+
+# Optional: can be sandbox or production (default: production)
+npx convex env set POLAR_SERVER=sandbox
+```
+
+Instantiate a Polar Component client in a file in your app's `convex/` folder:
 
 ```ts
+// convex/example.ts
+import { Polar } from "@convex-dev/polar";
 import { components } from "./_generated/api";
-import { Counter } from "@convex-dev/counter";
 
-const counter = new Counter(components.counter, {
-  ...options,
+export const polar = new Polar(components.polar);
+
+// Create an action to get a Polar checkout URL
+export const getCheckoutUrl = action({
+  args: {
+    priceId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Call your own user query to get the current user
+    const user = await ctx.runQuery(api.users.getUser);
+    const polar = new Polar({
+      server: "sandbox",
+      accessToken: env.POLAR_ACCESS_TOKEN,
+    });
+    const result = await polar.checkouts.custom.create({
+      productPriceId: priceId,
+      successUrl: 'https://example.com/subscription-success',
+      customerEmail: user.email,
+      metadata: {
+        // Arbitrary metadata. This can be used to connect the user's ID with the
+        // Polar subscription and then associate resulting webhooks with the user
+        // in your system.
+        userId: user._id,
+      },
+    });
+    return result.url;
+  },
+});
+
+// The Polar component already handles syncing data from webhooks for you, but
+// you have to provide your own logic to connect a polar user id to a user in
+// your system. This callback retrieves the user ID from the metadata as it was
+// passed in to the checkout and then associates the polar user id with the user
+// in your system.
+export const polarEventCallback = internalMutation({
+  args: {
+    payload: v.any(),
+  },
+  handler: async (ctx, args) => {
+    switch (args.payload.type) {
+      case "subscription.created": {
+        const payload = WebhookSubscriptionCreatedPayload$inboundSchema.parse(
+          args.payload,
+        );
+        // Use the metadata to connect the user's ID with the Polar subscription
+        const userId = payload.data.metadata.userId;
+        await ctx.db.patch(userId as Id<"users">, {
+          polarId: payload.data.userId,
+        });
+        break;
+      }
+    }
+  },
+});
+
+```
+
+Register Polar webhook handlers by creating an `http.ts` file in your `convex/` folder and use the client you've exported above:
+
+```ts
+// http.ts
+import { polar } from "./example";
+import { httpRouter } from "convex/server";
+import { internal } from "./_generated/api";
+
+const http = httpRouter();
+
+// this call registers the routes necessary for the component
+polar.registerRoutes(http, {
+  // Optionally override the default path that Polar events will be sent to
+  // (default is /events/polar)
+  path: "/events/polar",
+  // Optionally provide a callback to run on each event
+  eventCallback: internal.example.polarEventCallback,
+});
+export default http;
+```
+
+## Querying Polar data
+
+To list all subscriptions for a user, use the `listUserSubscriptions` method in your Convex function.
+
+```ts
+// convex/subscriptions.ts
+export const listUserSubscriptions = query({
+  args: {
+    // Note: this is the user's Polar ID, not their ID from your system. See
+    // above for how to retrieve and store the user's Polar ID with your system
+    // user data.
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return ctx.runQuery(polar.component.lib.listUserSubscriptions, {
+      userId: args.userId,
+    });
+  },
+});
+
+```
+
+To list all products, use `listProducts`:
+
+```ts
+export const listProducts = query({
+  args: {},
+  handler: async (ctx) => {
+    return polar.listProducts(ctx, { includeArchived: false });
+  },
 });
 ```
 
-See more example usage in [example.ts](./example/convex/example.ts).
+
+List user benefit grants:
+
+```ts
+export const listUserBenefitGrants = query({
+  args: {
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return polar.listUserBenefitGrants(ctx, { userId: args.userId });
+  },
+});
+```
+
+Get data by ID:
+
+```ts
+export const getSubscription = query({
+  args: {
+    id: v.id("subscriptions"),
+  },
+  handler: async (ctx, args) => {
+    return polar.getSubscription(ctx, { id: args.id });
+  },
+});
+
+export const getOrder = query({
+  args: {
+    id: v.id("orders"),
+  },
+  handler: async (ctx, args) => {
+    return polar.getOrder(ctx, { id: args.id });
+  },
+});
+
+export const getProduct = query({
+  args: {
+    id: v.id("products"),
+  },
+  handler: async (ctx, args) => {
+    return polar.getProduct(ctx, { id: args.id });
+  },
+});
+
+export const getBenefit = query({
+  args: {
+    id: v.id("benefits"),
+  },
+  handler: async (ctx, args) => {
+    return polar.getBenefit(ctx, { id: args.id });
+  },
+});
+
+export const getBenefitGrant = query({
+  args: {
+    id: v.id("benefitGrants"),
+  },
+  handler: async (ctx, args) => {
+    return polar.getBenefitGrant(ctx, { id: args.id });
+  },
+});
+```
 
 <!-- END: Include on https://convex.dev/components -->

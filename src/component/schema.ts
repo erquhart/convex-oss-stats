@@ -8,6 +8,18 @@ export default defineSchema({
     starCount: v.number(),
     contributorCount: v.number(),
     dependentCount: v.number(),
+    dependentCountPrevious: v.optional(
+      v.object({
+        count: v.number(),
+        updatedAt: v.number(),
+      })
+    ),
+    dependentCountComparison: v.optional(
+      v.object({
+        count: v.number(),
+        updatedAt: v.number(),
+      })
+    ),
     updatedAt: v.number(),
   }).index("name", ["nameNormalized"]),
   githubRepos: defineTable({
@@ -18,6 +30,18 @@ export default defineSchema({
     starCount: v.number(),
     contributorCount: v.number(),
     dependentCount: v.number(),
+    dependentCountComparison: v.optional(
+      v.object({
+        count: v.number(),
+        updatedAt: v.number(),
+      })
+    ),
+    dependentCountPrevious: v.optional(
+      v.object({
+        count: v.number(),
+        updatedAt: v.number(),
+      })
+    ),
     updatedAt: v.number(),
   }).index("owner_name", ["ownerNormalized", "nameNormalized"]),
   npmOrgs: defineTable({

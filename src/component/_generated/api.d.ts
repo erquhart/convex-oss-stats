@@ -75,6 +75,7 @@ export type Mounts = {
         repos: Array<{
           contributorCount: number;
           dependentCount: number;
+          dependentCountPrevious?: { count: number; updatedAt: number };
           name: string;
           owner: string;
           starCount: number;
