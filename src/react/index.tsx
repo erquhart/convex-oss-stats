@@ -83,8 +83,8 @@ export const useGithubDependentCounter = (
       dependentCountPrevious?.count &&
       dependentCountPrevious.count < dependentCount
         ? Math.round(
-            (dependentCount + dependentCount - dependentCountPrevious.count) *
-              0.8
+            dependentCount +
+              (dependentCount - dependentCountPrevious.count) * 0.8
           )
         : undefined,
     startTime: updatedAt,
