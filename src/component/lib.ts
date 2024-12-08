@@ -224,6 +224,7 @@ const syncNpm = async (ctx: GenericActionCtx<DataModel>, npmOrgs: string[]) => {
                 downloads: { day: string; downloads: number }[];
               } = await lastPageResponse.json();
               // Create array of week of day averages, 0 = Sunday
+              console.log(lastPageJson);
               const dayOfWeekAverages = Array(7)
                 .fill(0)
                 .map((_, idx) => {

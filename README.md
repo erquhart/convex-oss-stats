@@ -22,21 +22,25 @@ export const { getGithubOwner } = ossStats.api()
 
 // src/OssStats.tsx
 import { useQuery } from 'convex/react'
+import { useNpmDownloadCounter } from "@convex-dev/oss-stats/react";
 import { api } from '../convex/_generated/api'
 
 const OssStats = () => {
-  const github = useQuery(api.stats.getGithubOwner, {
+  const githubOwner = useQuery(api.stats.getGithubOwner, {
     owner: 'get-convex',
   })
-  const npm = useQuery(api.stats.getNpmOrg, {
+  const npmOrg = useQuery(api.stats.getNpmOrg, {
     org: 'convex-dev',
   })
+
+  // Use this hook to get a forecasted download count for an npm package or org
+  const liveNpmDownloadCount = useNpmDownloadCounter(npmOrg);
 
   return (
     <>
       {/* If webhook is registered, this will update in realtime 🔥 */}
-      <div>{github.starCount}</div>
-      <div>{npm.downloadCount}</div>
+      <div>{githubOwner.starCount}</div>
+      <div>{npmOrg.downloadCount}</div>
     </>
   )
 }
@@ -133,7 +137,7 @@ export default http;
 
 ## Querying data
 
-To get data for a GitHub owner (org or user), use the `getGithubOwner` query:
+Use the `useQuery` hook to get data from the component. Here's an example of how to get data for a GitHub owner (org or user) and an npm package or org:
 
 ```ts
 // src/OssStats.tsx
@@ -141,21 +145,63 @@ import { useQuery } from 'convex/react'
 import { api } from '../convex/_generated/api'
 
 const OssStats = () => {
-  const github = useQuery(api.stats.getGithubOwner, {
+  const githubOwner = useQuery(api.stats.getGithubOwner, {
     owner: 'get-convex',
   })
-  const npm = useQuery(api.stats.getNpmOrg, {
+  const npmOrg = useQuery(api.stats.getNpmOrg, {
     org: 'convex-dev',
   })
 
   return (
     <>
       {/* If webhook is registered, this will update in realtime 🔥 */}
-      <div>{github.starCount}</div>
-      <div>{npm.downloadCount}</div>
+      <div>{githubOwner.starCount}</div>
+      <div>{npmOrg.downloadCount}</div>
     </>
   )
 }
+```
+
+## Available queries
+
+#### `stats.getGithubOwner`
+
+```ts
+const {
+  starCount,
+  dependentCount,
+  dayOfWeekAverages,
+  updatedAt,
+} = useQuery(api.stats.getGithubOwner, {
+  owner: 'get-convex',
+})
+```
+
+#### `stats.getNpmOrg`
+
+```ts
+const {
+  downloadCount,
+  dayOfWeekAverages,
+  updatedAt,
+} = useQuery(api.stats.getNpmOrg, {
+  org: 'convex-dev',
+})
+```
+
+## React hooks
+
+#### `useNpmDownloadCounter`
+
+```ts
+import { useNpmDownloadCounter } from "@convex-dev/oss-stats/react";
+
+const npmOrg = useQuery(api.stats.getNpmOrg, {
+  org: 'convex-dev',
+})
+
+// Hook returns a number that updates based on a forecast of the npm download count
+const downloadCount = useNpmDownloadCounter(npmOrg)
 ```
 
 <!-- END: Include on https://convex.dev/components -->
