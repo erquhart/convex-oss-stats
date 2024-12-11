@@ -57,11 +57,13 @@ const syncGithub = async (
   await Promise.all(
     githubOwners.map((owner) =>
       ownerLimit(async () => {
-        let user;
+        let user: Awaited<
+          ReturnType<typeof octokit.rest.users.getByUsername>
+        >["data"];
         try {
-          user = await octokit.rest.users.getByUsername({
+          ({ data: user } = await octokit.rest.users.getByUsername({
             username: owner,
-          });
+          }));
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (e: any) {
           if (e.status === 404) {
@@ -72,9 +74,9 @@ const syncGithub = async (
           return;
         }
         await ctx.runMutation(api.lib.updateGithubOwner, {
-          owner: user.data.login,
+          owner: user.login,
         });
-        const isOrg = user.data.type === "Organization";
+        const isOrg = user.type === "Organization";
         const iterator = isOrg
           ? octokit.paginate.iterator(octokit.rest.repos.listForOrg, {
               org: owner,
@@ -129,7 +131,7 @@ const syncGithub = async (
           });
         }
         await ctx.runMutation(api.lib.updateGithubOwner, {
-          owner: user.data.login,
+          owner: user.login,
           starCount: ownerStars,
           contributorCount: ownerContributors,
           dependentCount: ownerDependentCount,
