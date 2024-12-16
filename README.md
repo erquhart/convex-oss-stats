@@ -2,8 +2,6 @@
 
 [![npm version](https://badge.fury.io/js/@convex-dev%2Foss-stats.svg)](https://badge.fury.io/js/@convex-dev%2Foss-stats)
 
-**Note: Convex Components are currently in beta.**
-
 <!-- START: Include on https://convex.dev/components -->
 
 Keep GitHub and npm data for your open source projects synced to your Convex database.
