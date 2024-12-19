@@ -132,12 +132,7 @@ import { httpRouter } from "convex/server";
 
 const http = httpRouter();
 
-// this call registers the routes necessary for the component
-ossStats.registerRoutes(http, {
-  // Optionally override the default path that GitHub events will be sent to
-  // (default is /events/github)
-  path: "/events/github",
-});
+ossStats.registerRoutes(http);
 export default http;
 ```
 
@@ -208,6 +203,14 @@ const npmOrg = useQuery(api.stats.getNpmOrg, {
 
 // Hook returns a number that updates based on a forecast of the npm download count
 const downloadCount = useNpmDownloadCounter(npmOrg)
+```
+
+### Override the default `/events/github` path
+
+```ts
+ossStats.registerRoutes(http, {
+  path: "/my/github/webhook",
+});
 ```
 
 <!-- END: Include on https://convex.dev/components -->
