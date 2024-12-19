@@ -4,10 +4,15 @@ import * as cheerio from "cheerio";
 import { Crons } from "@convex-dev/crons";
 import { action, mutation, query } from "./_generated/server";
 import { api, components } from "./_generated/api";
-import { GenericActionCtx } from "convex/server";
+import {
+  GenericActionCtx,
+  GenericDocument,
+  WithoutSystemFields,
+} from "convex/server";
 import { DataModel } from "./_generated/dataModel";
 import pLimit from "p-limit";
 import { chunk } from "remeda";
+import schema from "./schema";
 
 const crons = new Crons(components.crons);
 const repoPageRetries = 3;
@@ -519,6 +524,7 @@ export const sync = action({
     npmOrgs: v.array(v.string()),
     minStars: v.number(),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     await Promise.all([
       syncGithub(ctx, args.githubAccessToken, args.githubOwners, args.minStars),
@@ -543,28 +549,48 @@ export const sync = action({
   },
 });
 
-export const getGithubOwner = query({
+export const getGithubOwners = query({
   args: {
-    owner: v.string(),
+    owners: v.array(v.string()),
   },
+  returns: v.array(v.union(v.null(), schema.tables.githubOwners.validator)),
   handler: async (ctx, args) => {
-    return ctx.db
-      .query("githubOwners")
-      .withIndex("name", (q) =>
-        q.eq("nameNormalized", args.owner.toLowerCase())
+    return Promise.all(
+      args.owners.map((owner) =>
+        ctx.db
+          .query("githubOwners")
+          .withIndex("name", (q) => q.eq("nameNormalized", owner.toLowerCase()))
+          .unique()
+          .then(nullOrWithoutSystemFields)
       )
-      .unique();
+    );
   },
 });
 
-export const getNpmOrg = query({
+function nullOrWithoutSystemFields<T extends GenericDocument>(
+  value: T | null
+): WithoutSystemFields<T> | null {
+  if (!value) {
+    return null;
+  }
+  const { _id, _creationTime, ...rest } = value;
+  return rest as WithoutSystemFields<T>;
+}
+
+export const getNpmOrgs = query({
   args: {
-    name: v.string(),
+    names: v.array(v.string()),
   },
+  returns: v.array(v.union(v.null(), schema.tables.npmOrgs.validator)),
   handler: async (ctx, args) => {
-    return ctx.db
-      .query("npmOrgs")
-      .withIndex("name", (q) => q.eq("name", args.name))
-      .unique();
+    return Promise.all(
+      args.names.map((name) =>
+        ctx.db
+          .query("npmOrgs")
+          .withIndex("name", (q) => q.eq("name", name))
+          .unique()
+          .then(nullOrWithoutSystemFields)
+      )
+    );
   },
 });
