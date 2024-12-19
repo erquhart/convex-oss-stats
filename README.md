@@ -6,30 +6,32 @@
 
 Keep GitHub and npm data for your open source projects synced to your Convex database.
 
-```tsx
+```ts
 // convex/stats.ts
-import { OssStats } from '@convex-dev/oss-stats'
-import { components } from './_generated/api'
+import { components } from "./_generated/api";
+import { OssStats } from "@convex-dev/oss-stats";
 
-const ossStats = new OssStats(components.ossStats, {
-  githubOwners: ['get-convex'],
-  npmOrgs: ['convex-dev'],
-})
+export const ossStats = new OssStats(components.ossStats, {
+  githubOwners: ["get-convex"],
+  npmOrgs: ["convex-dev"],
+});
 
-export const { getGithubOwner } = ossStats.api()
+export const { sync, getGithubOwner, getNpmOrg } = ossStats.api();
+```
 
+```tsx
 // src/OssStats.tsx
-import { useQuery } from 'convex/react'
+import { useQuery } from "convex/react";
 import { useNpmDownloadCounter } from "@convex-dev/oss-stats/react";
-import { api } from '../convex/_generated/api'
+import { api } from "../convex/_generated/api";
 
 const OssStats = () => {
   const githubOwner = useQuery(api.stats.getGithubOwner, {
-    owner: 'get-convex',
-  })
+    owner: "get-convex",
+  });
   const npmOrg = useQuery(api.stats.getNpmOrg, {
-    org: 'convex-dev',
-  })
+    org: "convex-dev",
+  });
 
   // Use this hook to get a forecasted download count for an npm package or org
   const liveNpmDownloadCount = useNpmDownloadCounter(npmOrg);
@@ -38,10 +40,10 @@ const OssStats = () => {
     <>
       {/* If webhook is registered, this will update in realtime 🔥 */}
       <div>{githubOwner.starCount}</div>
-      <div>{npmOrg.downloadCount}</div>
+      <div>{liveNpmDownloadCount}</div>
     </>
-  )
-}
+  );
+};
 ```
 
 ## Prerequisites
