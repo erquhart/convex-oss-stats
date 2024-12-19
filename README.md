@@ -205,6 +205,55 @@ const npmOrg = useQuery(api.stats.getNpmOrg, {
 const downloadCount = useNpmDownloadCounter(npmOrg)
 ```
 
+## Options and configuration
+
+### Manually syncing data
+
+If you don't want to use the webhook, you can use a cron job to sync data:
+
+```ts
+// In convex/crons.ts
+import { cronJobs } from "convex/server";
+import { internal } from "./_generated/api";
+
+export const syncStars = internalAction(async (ctx) => {
+  await ossStats.sync(ctx);
+});
+
+const crons = cronJobs();
+
+crons.interval("syncStars", { minutes: 15 }, internal.stats.syncStars);
+
+export default crons;
+```
+
+You could alternatively call this from the CLI or dashboard:
+
+```sh
+npx convex run crons:syncStars
+```
+
+Or call it via an http endpoint:
+
+```ts
+// In convex/http.ts
+import { httpAction } from "./_generated/server";
+//...
+http.route({
+  path: "/syncStars",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    if (request.headers.get("x-api-key") !== process.env.API_KEY) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+    await ossStats.sync(ctx);
+    return new Response("ok", { status: 200 });
+  }),
+});
+```
+
+`API_KEY` can be set in the dashboard or via `npx convex env set API_KEY=...`
+
 ### Override the default `/events/github` path
 
 ```ts

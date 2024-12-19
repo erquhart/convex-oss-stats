@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as crons from "../crons.js";
 import type * as example from "../example.js";
 import type * as http from "../http.js";
 
@@ -25,6 +26,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  crons: typeof crons;
   example: typeof example;
   http: typeof http;
 }>;
