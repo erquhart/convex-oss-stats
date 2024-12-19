@@ -41,6 +41,11 @@ export class OssStats {
     }
   }
 
+  /**
+   * Registers routes for the webhook to sync GitHub stars.
+   * @param http - The http router exposed in convex/http.ts
+   * @param options - For overriding the default `/events/github` path.
+   */
   registerRoutes(
     http: HttpRouter,
     {
@@ -79,7 +84,7 @@ export class OssStats {
   }
 
   async sync(ctx: RunActionCtx) {
-    return await ctx.runAction(this.component.lib.sync, {
+    return ctx.runAction(this.component.lib.sync, {
       githubAccessToken: this.githubAccessToken,
       githubOwners: this.githubOwners,
       npmOrgs: this.npmOrgs,
@@ -87,15 +92,49 @@ export class OssStats {
     });
   }
 
+  /**
+   * Gets the GitHub stars for a given owner.
+   * @param ctx - The ctx from your query or mutation.
+   * @param owner - The owner to get the stars for.
+   */
   async getGithubOwner(ctx: RunQueryCtx, owner: string) {
-    return await ctx.runQuery(this.component.lib.getGithubOwner, {
-      owner,
+    return (
+      await ctx.runQuery(this.component.lib.getGithubOwners, {
+        owners: [owner],
+      })
+    )[0];
+  }
+
+  /**
+   * Gets the GitHub stars for the owners you've configured.
+   * @param ctx - The ctx from your query or mutation.
+   */
+  async getAllGithubOwners(ctx: RunQueryCtx) {
+    return ctx.runQuery(this.component.lib.getGithubOwners, {
+      owners: this.githubOwners,
     });
   }
 
+  /**
+   * Gets the npm download count for a given org.
+   * @param ctx - The ctx from your query or mutation.
+   * @param name - The name of the org to get the download count for.
+   */
   async getNpmOrg(ctx: RunQueryCtx, name: string) {
-    return await ctx.runQuery(this.component.lib.getNpmOrg, {
-      name,
+    return (
+      await ctx.runQuery(this.component.lib.getNpmOrgs, {
+        names: [name],
+      })
+    )[0];
+  }
+
+  /**
+   * Gets the npm download count for the orgs you've configured.
+   * @param ctx - The ctx from your query or mutation.
+   */
+  async getAllNpmOrgs(ctx: RunQueryCtx) {
+    return ctx.runQuery(this.component.lib.getNpmOrgs, {
+      names: this.npmOrgs,
     });
   }
 
@@ -109,24 +148,36 @@ export class OssStats {
   api() {
     return {
       sync: internalActionGeneric({
-        handler: async (ctx, _args) => {
-          await this.sync(ctx);
+        handler: (ctx, _args) => {
+          return this.sync(ctx);
         },
       }),
       getGithubOwner: queryGeneric({
         args: {
           owner: v.string(),
         },
-        handler: async (ctx, args) => {
-          return await this.getGithubOwner(ctx, args.owner);
+        handler: (ctx, args) => {
+          return this.getGithubOwner(ctx, args.owner);
+        },
+      }),
+      getAllGithubOwners: queryGeneric({
+        args: {},
+        handler: (ctx) => {
+          return this.getAllGithubOwners(ctx);
         },
       }),
       getNpmOrg: queryGeneric({
         args: {
           name: v.string(),
         },
-        handler: async (ctx, args) => {
-          return await this.getNpmOrg(ctx, args.name);
+        handler: (ctx, args) => {
+          return this.getNpmOrg(ctx, args.name);
+        },
+      }),
+      getAllNpmOrgs: queryGeneric({
+        args: {},
+        handler: (ctx) => {
+          return this.getAllNpmOrgs(ctx);
         },
       }),
     };

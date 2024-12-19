@@ -28,13 +28,32 @@ declare const fullApi: ApiFromModules<{
 }>;
 export type Mounts = {
   lib: {
-    getGithubOwner: FunctionReference<
+    getGithubOwners: FunctionReference<
       "query",
       "public",
-      { owner: string },
-      any
+      { owners: Array<string> },
+      Array<null | {
+        contributorCount: number;
+        dependentCount: number;
+        dependentCountComparison?: { count: number; updatedAt: number };
+        dependentCountPrevious?: { count: number; updatedAt: number };
+        name: string;
+        nameNormalized: string;
+        starCount: number;
+        updatedAt: number;
+      }>
     >;
-    getNpmOrg: FunctionReference<"query", "public", { name: string }, any>;
+    getNpmOrgs: FunctionReference<
+      "query",
+      "public",
+      { names: Array<string> },
+      Array<null | {
+        dayOfWeekAverages: Array<number>;
+        downloadCount: number;
+        name: string;
+        updatedAt: number;
+      }>
+    >;
     sync: FunctionReference<
       "action",
       "public",
@@ -44,7 +63,7 @@ export type Mounts = {
         minStars: number;
         npmOrgs: Array<string>;
       },
-      any
+      null
     >;
     updateGithubOwner: FunctionReference<
       "mutation",
