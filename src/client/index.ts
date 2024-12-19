@@ -110,9 +110,11 @@ export class OssStats {
    * @param ctx - The ctx from your query or mutation.
    */
   async getAllGithubOwners(ctx: RunQueryCtx) {
-    return ctx.runQuery(this.component.lib.getGithubOwners, {
-      owners: this.githubOwners,
-    });
+    return (
+      await ctx.runQuery(this.component.lib.getGithubOwners, {
+        owners: this.githubOwners,
+      })
+    ).flatMap((owner) => (owner ? [owner] : []));
   }
 
   /**
@@ -133,9 +135,11 @@ export class OssStats {
    * @param ctx - The ctx from your query or mutation.
    */
   async getAllNpmOrgs(ctx: RunQueryCtx) {
-    return ctx.runQuery(this.component.lib.getNpmOrgs, {
-      names: this.npmOrgs,
-    });
+    return (
+      await ctx.runQuery(this.component.lib.getNpmOrgs, {
+        names: this.npmOrgs,
+      })
+    ).flatMap((org) => (org ? [org] : []));
   }
 
   /**

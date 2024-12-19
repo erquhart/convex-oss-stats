@@ -136,7 +136,7 @@ ossStats.registerRoutes(http);
 export default http;
 ```
 
-## Querying data
+## Querying data from the frontend
 
 Use the `useQuery` hook to get data from the component. Here's an example of how to get data for a GitHub owner (org or user) and an npm package or org:
 
@@ -163,7 +163,7 @@ const OssStats = () => {
 }
 ```
 
-## Available queries
+### Available queries
 
 #### `stats.getGithubOwner`
 
@@ -183,7 +183,7 @@ const { downloadCount, dayOfWeekAverages, updatedAt } = useQuery(
 );
 ```
 
-## React hooks
+### React hooks
 
 #### `useNpmDownloadCounter`
 
@@ -194,6 +194,24 @@ const npmOrg = useQuery(api.stats.getNpmOrg, { org: "convex-dev" });
 
 // Hook returns a number that updates based on a forecast of the npm download count
 const downloadCount = useNpmDownloadCounter(npmOrg);
+```
+
+## Querying data from the backend
+
+You can also query data from the backend using the `ossStats` object.
+Note: the data will only be available for the owners and npm orgs you configured
+and have synced.
+
+```ts
+// Within a Convex query, mutation, or action:
+// All of the owners you configured when initializing the OssStats object
+const githubOwners = await ossStats.getAllGithubOwners(ctx);
+// A single owner
+const githubOwner = await ossStats.getGithubOwner(ctx, "get-convex");
+// All of the npm orgs you configured when initializing the OssStats object
+const npmOrgs = await ossStats.getAllNpmOrgs(ctx);
+// A single npm org
+const npmOrg = await ossStats.getNpmOrg(ctx, "convex-dev");
 ```
 
 ## Options and configuration
