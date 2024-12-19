@@ -48,18 +48,24 @@ const OssStats = () => {
 
 ## Prerequisites
 
+### Convex App
+
+You'll need a Convex App to use the component. Follow any of the
+[Convex quickstarts](https://docs.convex.dev/home) to set one up.
+
 ### GitHub Account (if syncing GitHub data)
 
-Create a GitHub account and get the following credentials:
+From your GitHub account, get the following credentials:
 
 - **Access Token**
-  - Go to your GitHub account settings and generate a new access token - just
-    needs read access to public repositories.
-- **Webhook Secret**
-  - Note: this is optional, you'll walk through these steps for every org or repo
-    that you want to get live star counts for
-  - Go to the settings for the org/repo and create a new webhook
-  - Get the HTTP Actions URL from your production Convex deployment: https://dashboard.convex.dev > Production project deployment > Settings > URL & Deploy Key > HTTP Actions URL
+  - Go to account settings and generate a new access token with read access to
+    public repositories.
+- **Webhook Secret**: do this for each org or repo.
+  - Note: this is optional. Without it, you won't get live star counts.
+    See how to [manually sync data below](#manually-syncing-data).
+  - Go to the settings for the org/repo and create a new webhook.
+  - Get the HTTP Actions URL for your **Production** Convex deployment settings:
+    https://dashboard.convex.dev/deployment/settings > HTTP Actions URL
   - Payload URL: `<http-actions-url>/events/github`
   - Content type: `application/json`
   - Generate a secret to share between your Convex deployment and GitHub
@@ -68,10 +74,6 @@ Create a GitHub account and get the following credentials:
 ### Note on npm data
 
 npm data accessed by this component is public and doesn't require any credentials.
-
-### Convex App
-
-You'll need a Convex App to use the component. Follow any of the [Convex quickstarts](https://docs.convex.dev/home) to set one up.
 
 ## Installation
 
@@ -100,6 +102,10 @@ Set your API credentials:
 npx convex env set GITHUB_ACCESS_TOKEN=xxxxx
 npx convex env set GITHUB_WEBHOOK_SECRET=xxxxx
 ```
+
+If you haven't been running `npx convex dev` yet, you'll need to start it now.
+It will generate code for the component in your `convex/_generated/api` folder,
+and will deploy changes automatically as you change files in `convex/`.
 
 Instantiate an OssStats Component client in a file in your app's `convex/` folder:
 
