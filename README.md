@@ -168,26 +168,19 @@ const OssStats = () => {
 #### `stats.getGithubOwner`
 
 ```ts
-const {
-  starCount,
-  dependentCount,
-  dayOfWeekAverages,
-  updatedAt,
-} = useQuery(api.stats.getGithubOwner, {
-  owner: 'get-convex',
-})
+const { starCount, dependentCount, dayOfWeekAverages, updatedAt } = useQuery(
+  api.stats.getGithubOwner,
+  { owner: "get-convex" }
+);
 ```
 
 #### `stats.getNpmOrg`
 
 ```ts
-const {
-  downloadCount,
-  dayOfWeekAverages,
-  updatedAt,
-} = useQuery(api.stats.getNpmOrg, {
-  org: 'convex-dev',
-})
+const { downloadCount, dayOfWeekAverages, updatedAt } = useQuery(
+  api.stats.getNpmOrg,
+  { org: "convex-dev" }
+);
 ```
 
 ## React hooks
@@ -197,12 +190,10 @@ const {
 ```ts
 import { useNpmDownloadCounter } from "@convex-dev/oss-stats/react";
 
-const npmOrg = useQuery(api.stats.getNpmOrg, {
-  org: 'convex-dev',
-})
+const npmOrg = useQuery(api.stats.getNpmOrg, { org: "convex-dev" });
 
 // Hook returns a number that updates based on a forecast of the npm download count
-const downloadCount = useNpmDownloadCounter(npmOrg)
+const downloadCount = useNpmDownloadCounter(npmOrg);
 ```
 
 ## Options and configuration
