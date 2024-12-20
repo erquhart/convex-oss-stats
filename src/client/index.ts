@@ -70,12 +70,18 @@ export class OssStats {
         }
         const body = JSON.parse(bodyString);
         const {
-          repository: { name, owner, stargazers_count: stars },
+          repository,
+        }: {
+          repository: {
+            name: string;
+            owner: { login: string };
+            stargazers_count: number;
+          };
         } = body;
         await ctx.runMutation(this.component.lib.updateGithubRepoStars, {
-          owner: owner.login,
-          name,
-          starCount: stars,
+          owner: repository.owner.login,
+          name: repository.name,
+          starCount: repository.stargazers_count,
           githubAccessToken: this.githubAccessToken,
         });
         return new Response(null, { status: 200 });

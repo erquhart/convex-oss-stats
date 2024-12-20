@@ -4,14 +4,14 @@ import { useEffect } from "react";
 const useFakeCounter = ({
   value,
   nextValue,
-  startTime,
-  endTime,
+  rangeStart,
+  rangeEnd,
   intervalMs = 1000,
 }: {
   value?: number;
   nextValue?: number;
-  startTime?: number;
-  endTime?: number;
+  rangeStart?: number;
+  rangeEnd?: number;
   intervalMs?: number;
 }) => {
   const [currentValue, setCurrentValue] = useState(value);
@@ -20,17 +20,17 @@ const useFakeCounter = ({
     if (
       typeof value !== "number" ||
       typeof nextValue !== "number" ||
-      typeof startTime !== "number" ||
-      typeof endTime !== "number"
+      typeof rangeStart !== "number" ||
+      typeof rangeEnd !== "number"
     ) {
       setCurrentValue(value);
       return;
     }
     const diff = nextValue - value;
-    const duration = endTime - startTime;
+    const duration = rangeEnd - rangeStart;
     const rate = diff / duration;
-    setCurrentValue(Math.round(value + rate * (Date.now() - startTime)));
-  }, [value, nextValue, startTime, endTime]);
+    setCurrentValue(Math.round(value + rate * (Date.now() - rangeStart)));
+  }, [value, nextValue, rangeStart, rangeEnd]);
 
   useEffect(() => {
     // avoid initial delay
@@ -59,8 +59,8 @@ export const useNpmDownloadCounter = (
   return useFakeCounter({
     value: downloadCount,
     nextValue: (downloadCount ?? 0) + nextDayOfWeekAverage,
-    startTime: updatedAt,
-    endTime: (updatedAt ?? 0) + 1000 * 60 * 60 * 24,
+    rangeStart: updatedAt,
+    rangeEnd: (updatedAt ?? 0) + 1000 * 60 * 60 * 24,
   });
 };
 
@@ -87,8 +87,8 @@ export const useGithubDependentCounter = (
               (dependentCount - dependentCountPrevious.count) * 0.8
           )
         : undefined,
-    startTime: updatedAt,
-    endTime:
+    rangeStart: updatedAt,
+    rangeEnd:
       updatedAt && dependentCountPrevious?.updatedAt
         ? updatedAt + updatedAt - dependentCountPrevious.updatedAt
         : undefined,
