@@ -453,7 +453,7 @@ export const updateGithubRepoStars = mutation({
     githubAccessToken: v.string(),
     owner: v.string(),
     name: v.string(),
-    starCount: v.optional(v.number()),
+    starCount: v.number(),
   },
   handler: async (ctx, args) => {
     const owner = await ctx.db
@@ -503,10 +503,7 @@ export const updateGithubRepoStars = mutation({
       updatedAt: Date.now(),
     });
     await ctx.db.patch(owner._id, {
-      starCount: Math.max(
-        0,
-        owner.starCount - repo.starCount + (args.starCount ?? 0)
-      ),
+      starCount: Math.max(0, owner.starCount - repo.starCount + args.starCount),
       updatedAt: Date.now(),
     });
   },
