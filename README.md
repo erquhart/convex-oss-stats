@@ -6,30 +6,32 @@
 
 Keep GitHub and npm data for your open source projects synced to your Convex database.
 
-```tsx
+```ts
 // convex/stats.ts
-import { OssStats } from '@convex-dev/oss-stats'
-import { components } from './_generated/api'
+import { components } from "./_generated/api";
+import { OssStats } from "@convex-dev/oss-stats";
 
-const ossStats = new OssStats(components.ossStats, {
-  githubOwners: ['get-convex'],
-  npmOrgs: ['convex-dev'],
-})
+export const ossStats = new OssStats(components.ossStats, {
+  githubOwners: ["get-convex"],
+  npmOrgs: ["convex-dev"],
+});
 
-export const { getGithubOwner } = ossStats.api()
+export const { sync, getGithubOwner, getNpmOrg } = ossStats.api();
+```
 
+```tsx
 // src/OssStats.tsx
-import { useQuery } from 'convex/react'
+import { useQuery } from "convex/react";
 import { useNpmDownloadCounter } from "@convex-dev/oss-stats/react";
-import { api } from '../convex/_generated/api'
+import { api } from "../convex/_generated/api";
 
 const OssStats = () => {
   const githubOwner = useQuery(api.stats.getGithubOwner, {
-    owner: 'get-convex',
-  })
+    owner: "get-convex",
+  });
   const npmOrg = useQuery(api.stats.getNpmOrg, {
-    org: 'convex-dev',
-  })
+    org: "convex-dev",
+  });
 
   // Use this hook to get a forecasted download count for an npm package or org
   const liveNpmDownloadCount = useNpmDownloadCounter(npmOrg);
@@ -38,26 +40,32 @@ const OssStats = () => {
     <>
       {/* If webhook is registered, this will update in realtime 🔥 */}
       <div>{githubOwner.starCount}</div>
-      <div>{npmOrg.downloadCount}</div>
+      <div>{liveNpmDownloadCount}</div>
     </>
-  )
-}
+  );
+};
 ```
 
 ## Prerequisites
 
+### Convex App
+
+You'll need a Convex App to use the component. Follow any of the
+[Convex quickstarts](https://docs.convex.dev/home) to set one up.
+
 ### GitHub Account (if syncing GitHub data)
 
-Create a GitHub account and get the following credentials:
+From your GitHub account, get the following credentials:
 
 - **Access Token**
-  - Go to your GitHub account settings and generate a new access token - just
-    needs read access to public repositories.
-- **Webhook Secret**
-  - Note: this is optional, you'll walk through these steps for every org or repo
-    that you want to get live star counts for
-  - Go to the settings for the org/repo and create a new webhook
-  - Get the HTTP Actions URL from your production Convex deployment: https://dashboard.convex.dev > Production project deployment > Settings > URL & Deploy Key > HTTP Actions URL
+  - Go to account settings and generate a new access token with read access to
+    public repositories.
+- **Webhook Secret**: do this for each org or repo.
+  - Note: this is optional. Without it, you won't get live star counts.
+    See how to [manually sync data below](#manually-syncing-data).
+  - Go to the settings for the org/repo and create a new webhook.
+  - Get the HTTP Actions URL for your **Production** Convex deployment settings:
+    https://dashboard.convex.dev/deployment/settings > HTTP Actions URL
   - Payload URL: `<http-actions-url>/events/github`
   - Content type: `application/json`
   - Generate a secret to share between your Convex deployment and GitHub
@@ -66,10 +74,6 @@ Create a GitHub account and get the following credentials:
 ### Note on npm data
 
 npm data accessed by this component is public and doesn't require any credentials.
-
-### Convex App
-
-You'll need a Convex App to use the component. Follow any of the [Convex quickstarts](https://docs.convex.dev/home) to set one up.
 
 ## Installation
 
@@ -99,6 +103,10 @@ npx convex env set GITHUB_ACCESS_TOKEN=xxxxx
 npx convex env set GITHUB_WEBHOOK_SECRET=xxxxx
 ```
 
+If you haven't been running `npx convex dev` yet, you'll need to start it now.
+It will generate code for the component in your `convex/_generated/api` folder,
+and will deploy changes automatically as you change files in `convex/`.
+
 Instantiate an OssStats Component client in a file in your app's `convex/` folder:
 
 ```ts
@@ -124,16 +132,11 @@ import { httpRouter } from "convex/server";
 
 const http = httpRouter();
 
-// this call registers the routes necessary for the component
-ossStats.registerRoutes(http, {
-  // Optionally override the default path that GitHub events will be sent to
-  // (default is /events/github)
-  path: "/events/github",
-});
+ossStats.registerRoutes(http);
 export default http;
 ```
 
-## Querying data
+## Querying data from the frontend
 
 Use the `useQuery` hook to get data from the component. Here's an example of how to get data for a GitHub owner (org or user) and an npm package or org:
 
@@ -160,46 +163,112 @@ const OssStats = () => {
 }
 ```
 
-## Available queries
+### Available queries
 
 #### `stats.getGithubOwner`
 
 ```ts
-const {
-  starCount,
-  dependentCount,
-  dayOfWeekAverages,
-  updatedAt,
-} = useQuery(api.stats.getGithubOwner, {
-  owner: 'get-convex',
-})
+const { starCount, dependentCount, dayOfWeekAverages, updatedAt } = useQuery(
+  api.stats.getGithubOwner,
+  { owner: "get-convex" }
+);
 ```
 
 #### `stats.getNpmOrg`
 
 ```ts
-const {
-  downloadCount,
-  dayOfWeekAverages,
-  updatedAt,
-} = useQuery(api.stats.getNpmOrg, {
-  org: 'convex-dev',
-})
+const { downloadCount, dayOfWeekAverages, updatedAt } = useQuery(
+  api.stats.getNpmOrg,
+  { org: "convex-dev" }
+);
 ```
 
-## React hooks
+### React hooks
 
 #### `useNpmDownloadCounter`
 
 ```ts
 import { useNpmDownloadCounter } from "@convex-dev/oss-stats/react";
 
-const npmOrg = useQuery(api.stats.getNpmOrg, {
-  org: 'convex-dev',
-})
+const npmOrg = useQuery(api.stats.getNpmOrg, { org: "convex-dev" });
 
 // Hook returns a number that updates based on a forecast of the npm download count
-const downloadCount = useNpmDownloadCounter(npmOrg)
+const downloadCount = useNpmDownloadCounter(npmOrg);
+```
+
+## Querying data from the backend
+
+You can also query data from the backend using the `ossStats` object.
+Note: the data will only be available for the owners and npm orgs you configured
+and have synced.
+
+```ts
+// Within a Convex query, mutation, or action:
+// All of the owners you configured when initializing the OssStats object
+const githubOwners = await ossStats.getAllGithubOwners(ctx);
+// A single owner
+const githubOwner = await ossStats.getGithubOwner(ctx, "get-convex");
+// All of the npm orgs you configured when initializing the OssStats object
+const npmOrgs = await ossStats.getAllNpmOrgs(ctx);
+// A single npm org
+const npmOrg = await ossStats.getNpmOrg(ctx, "convex-dev");
+```
+
+## Options and configuration
+
+### Manually syncing data
+
+If you don't want to use the webhook, you can use a cron job to sync data:
+
+```ts
+// In convex/crons.ts
+import { cronJobs } from "convex/server";
+import { internal } from "./_generated/api";
+
+export const syncStars = internalAction(async (ctx) => {
+  await ossStats.sync(ctx);
+});
+
+const crons = cronJobs();
+
+crons.interval("syncStars", { minutes: 15 }, internal.stats.syncStars);
+
+export default crons;
+```
+
+You could alternatively call this from the CLI or dashboard:
+
+```sh
+npx convex run crons:syncStars
+```
+
+Or call it via an http endpoint:
+
+```ts
+// In convex/http.ts
+import { httpAction } from "./_generated/server";
+//...
+http.route({
+  path: "/syncStars",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    if (request.headers.get("x-api-key") !== process.env.API_KEY) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+    await ossStats.sync(ctx);
+    return new Response("ok", { status: 200 });
+  }),
+});
+```
+
+`API_KEY` can be set in the dashboard or via `npx convex env set API_KEY=...`
+
+### Override the default `/events/github` path
+
+```ts
+ossStats.registerRoutes(http, {
+  path: "/my/github/webhook",
+});
 ```
 
 <!-- END: Include on https://convex.dev/components -->

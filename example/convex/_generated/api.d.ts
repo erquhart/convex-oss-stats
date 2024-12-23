@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as crons from "../crons.js";
 import type * as example from "../example.js";
 import type * as http from "../http.js";
 
@@ -25,6 +26,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  crons: typeof crons;
   example: typeof example;
   http: typeof http;
 }>;
@@ -42,13 +44,32 @@ export declare const internal: FilterApi<
 export declare const components: {
   ossStats: {
     lib: {
-      getGithubOwner: FunctionReference<
+      getGithubOwners: FunctionReference<
         "query",
         "internal",
-        { owner: string },
-        any
+        { owners: Array<string> },
+        Array<null | {
+          contributorCount: number;
+          dependentCount: number;
+          dependentCountComparison?: { count: number; updatedAt: number };
+          dependentCountPrevious?: { count: number; updatedAt: number };
+          name: string;
+          nameNormalized: string;
+          starCount: number;
+          updatedAt: number;
+        }>
       >;
-      getNpmOrg: FunctionReference<"query", "internal", { name: string }, any>;
+      getNpmOrgs: FunctionReference<
+        "query",
+        "internal",
+        { names: Array<string> },
+        Array<null | {
+          dayOfWeekAverages: Array<number>;
+          downloadCount: number;
+          name: string;
+          updatedAt: number;
+        }>
+      >;
       sync: FunctionReference<
         "action",
         "internal",
@@ -58,7 +79,7 @@ export declare const components: {
           minStars: number;
           npmOrgs: Array<string>;
         },
-        any
+        null
       >;
       updateGithubOwner: FunctionReference<
         "mutation",
