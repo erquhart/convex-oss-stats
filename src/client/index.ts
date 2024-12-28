@@ -97,7 +97,7 @@ export class OssStats {
     });
   }
 
-  async clear(ctx: RunActionCtx) {
+  async clearAndSync(ctx: RunActionCtx) {
     return ctx.runAction(this.component.lib.clearAndSync, {
       githubAccessToken: this.githubAccessToken,
       githubOwners: this.githubOwners,
@@ -168,6 +168,11 @@ export class OssStats {
       sync: internalActionGeneric({
         handler: (ctx, _args) => {
           return this.sync(ctx);
+        },
+      }),
+      clearAndSync: internalActionGeneric({
+        handler: (ctx, _args) => {
+          return this.clearAndSync(ctx);
         },
       }),
       getGithubOwner: queryGeneric({
