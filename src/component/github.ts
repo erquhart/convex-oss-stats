@@ -53,9 +53,13 @@ export const updateGithubRepoStars = mutation({
     if (!repo) {
       throw new Error(`Repo ${args.owner}/${args.name} not found`);
     }
-    await ctx.db.patch(repo._id, { starCount: args.starCount });
+    await ctx.db.patch(repo._id, {
+      starCount: args.starCount,
+      updatedAt: Date.now(),
+    });
     await ctx.db.patch(owner._id, {
       starCount: Math.max(0, owner.starCount - repo.starCount + args.starCount),
+      updatedAt: Date.now(),
     });
   },
 });
@@ -131,6 +135,7 @@ export const updateGithubRepos = mutation({
           contributorCount:
             repo.contributorCount || existingRepo.contributorCount,
           dependentCount: repo.dependentCount || existingRepo.dependentCount,
+          updatedAt: Date.now(),
         });
         return;
       }
@@ -185,6 +190,7 @@ export const updateGithubOwner = mutation({
       starCount,
       contributorCount,
       dependentCount,
+      updatedAt: Date.now(),
     });
   },
 });
