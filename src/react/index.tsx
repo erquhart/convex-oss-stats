@@ -1,5 +1,4 @@
-import { useCallback, useState } from "react";
-import { useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 
 const useFakeCounter = ({
   value,
@@ -14,6 +13,7 @@ const useFakeCounter = ({
   rangeEnd?: number;
   intervalMs?: number;
 }) => {
+  const [isInitialized, setIsInitialized] = useState(false);
   const [currentValue, setCurrentValue] = useState(value);
 
   const updateCurrentValue = useCallback(() => {
@@ -32,10 +32,20 @@ const useFakeCounter = ({
     setCurrentValue(Math.round(value + rate * (Date.now() - rangeStart)));
   }, [value, nextValue, rangeStart, rangeEnd]);
 
+  // Avoid initial delay
   useEffect(() => {
-    // avoid initial delay
-    updateCurrentValue();
-  }, []);
+    if (isInitialized) {
+      return;
+    }
+    if (typeof value === "number" && typeof currentValue !== "number") {
+      setCurrentValue(value);
+      return;
+    }
+    if (typeof value === "number" && typeof nextValue === "number") {
+      setCurrentValue(nextValue);
+      setIsInitialized(true);
+    }
+  }, [isInitialized, value, nextValue, currentValue]);
 
   useEffect(() => {
     const interval = setInterval(updateCurrentValue, intervalMs);
@@ -47,50 +57,20 @@ const useFakeCounter = ({
 };
 
 export const useNpmDownloadCounter = (
-  npmPackageOrOrg: {
+  npmPackageOrOrg?: {
     downloadCount: number;
     dayOfWeekAverages: number[];
-    updatedAt: number;
+    downloadCountUpdatedAt: number;
   } | null
 ) => {
-  const { downloadCount, dayOfWeekAverages, updatedAt } = npmPackageOrOrg ?? {};
+  const { downloadCount, dayOfWeekAverages, downloadCountUpdatedAt } =
+    npmPackageOrOrg ?? {};
   const nextDayOfWeekAverage =
     dayOfWeekAverages?.[(new Date().getDay() + 8) % 7] ?? 0;
   return useFakeCounter({
     value: downloadCount,
-    nextValue: (downloadCount ?? 0) + nextDayOfWeekAverage,
-    rangeStart: updatedAt,
-    rangeEnd: (updatedAt ?? 0) + 1000 * 60 * 60 * 24,
-  });
-};
-
-export const useGithubDependentCounter = (
-  githubRepoOrOwner: {
-    dependentCount: number;
-    dependentCountPrevious?: {
-      count: number;
-      updatedAt: number;
-    };
-    updatedAt: number;
-  } | null
-) => {
-  const { dependentCount, dependentCountPrevious, updatedAt } =
-    githubRepoOrOwner ?? {};
-  return useFakeCounter({
-    value: dependentCount,
-    nextValue:
-      dependentCount &&
-      dependentCountPrevious?.count &&
-      dependentCountPrevious.count < dependentCount
-        ? Math.round(
-            dependentCount +
-              (dependentCount - dependentCountPrevious.count) * 0.8
-          )
-        : undefined,
-    rangeStart: updatedAt,
-    rangeEnd:
-      updatedAt && dependentCountPrevious?.updatedAt
-        ? updatedAt + updatedAt - dependentCountPrevious.updatedAt
-        : undefined,
+    nextValue: (downloadCount ?? 0) + nextDayOfWeekAverage * 0.8,
+    rangeStart: downloadCountUpdatedAt,
+    rangeEnd: (downloadCountUpdatedAt ?? 0) + 1000 * 60 * 60 * 24,
   });
 };

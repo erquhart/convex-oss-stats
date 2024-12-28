@@ -43,7 +43,7 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   ossStats: {
-    lib: {
+    github: {
       getGithubOwners: FunctionReference<
         "query",
         "internal",
@@ -51,25 +51,47 @@ export declare const components: {
         Array<null | {
           contributorCount: number;
           dependentCount: number;
-          dependentCountComparison?: { count: number; updatedAt: number };
-          dependentCountPrevious?: { count: number; updatedAt: number };
+          dependentCountPrevious?: any;
           name: string;
           nameNormalized: string;
           starCount: number;
           updatedAt: number;
         }>
       >;
-      getNpmOrgs: FunctionReference<
-        "query",
+      updateGithubOwner: FunctionReference<
+        "mutation",
         "internal",
-        { names: Array<string> },
-        Array<null | {
-          dayOfWeekAverages: Array<number>;
-          downloadCount: number;
-          name: string;
-          updatedAt: number;
-        }>
+        { name: string },
+        any
       >;
+      updateGithubOwnerStats: FunctionReference<
+        "action",
+        "internal",
+        { githubAccessToken: string; owner: string; page?: number },
+        any
+      >;
+      updateGithubRepoStars: FunctionReference<
+        "mutation",
+        "internal",
+        { name: string; owner: string; starCount: number },
+        any
+      >;
+      updateGithubRepos: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          repos: Array<{
+            contributorCount: number;
+            dependentCount: number;
+            name: string;
+            owner: string;
+            starCount: number;
+          }>;
+        },
+        any
+      >;
+    };
+    lib: {
       sync: FunctionReference<
         "action",
         "internal",
@@ -81,57 +103,37 @@ export declare const components: {
         },
         null
       >;
-      updateGithubOwner: FunctionReference<
-        "mutation",
+    };
+    npm: {
+      getNpmOrgs: FunctionReference<
+        "query",
         "internal",
-        {
-          contributorCount?: number;
-          dependentCount?: number;
-          owner: string;
-          starCount?: number;
-        },
-        any
-      >;
-      updateGithubRepoStars: FunctionReference<
-        "mutation",
-        "internal",
-        {
-          githubAccessToken: string;
+        { names: Array<string> },
+        Array<null | {
+          dayOfWeekAverages: Array<number>;
+          downloadCount: number;
+          downloadCountUpdatedAt: number;
           name: string;
-          owner: string;
-          starCount?: number;
-        },
-        any
-      >;
-      updateGithubRepos: FunctionReference<
-        "mutation",
-        "internal",
-        {
-          repos: Array<{
-            contributorCount: number;
-            dependentCount: number;
-            dependentCountPrevious?: { count: number; updatedAt: number };
-            name: string;
-            owner: string;
-            starCount: number;
-          }>;
-        },
-        any
+          updatedAt: number;
+        }>
       >;
       updateNpmOrg: FunctionReference<
         "mutation",
         "internal",
-        {
-          dayOfWeekAverages: Array<number>;
-          downloadCount: number;
-          name: string;
-        },
+        { name: string },
         any
       >;
-      updateNpmPackages: FunctionReference<
+      updateNpmOrgStats: FunctionReference<
+        "action",
+        "internal",
+        { org: string; page?: number },
+        any
+      >;
+      updateNpmPackagesForOrg: FunctionReference<
         "mutation",
         "internal",
         {
+          org: string;
           packages: Array<{
             dayOfWeekAverages: Array<number>;
             downloadCount: number;

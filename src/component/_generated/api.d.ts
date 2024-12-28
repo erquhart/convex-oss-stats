@@ -8,7 +8,10 @@
  * @module
  */
 
+import type * as github from "../github.js";
 import type * as lib from "../lib.js";
+import type * as npm from "../npm.js";
+import type * as util from "../util.js";
 
 import type {
   ApiFromModules,
@@ -24,10 +27,13 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  github: typeof github;
   lib: typeof lib;
+  npm: typeof npm;
+  util: typeof util;
 }>;
 export type Mounts = {
-  lib: {
+  github: {
     getGithubOwners: FunctionReference<
       "query",
       "public",
@@ -35,25 +41,47 @@ export type Mounts = {
       Array<null | {
         contributorCount: number;
         dependentCount: number;
-        dependentCountComparison?: { count: number; updatedAt: number };
-        dependentCountPrevious?: { count: number; updatedAt: number };
+        dependentCountPrevious?: any;
         name: string;
         nameNormalized: string;
         starCount: number;
         updatedAt: number;
       }>
     >;
-    getNpmOrgs: FunctionReference<
-      "query",
+    updateGithubOwner: FunctionReference<
+      "mutation",
       "public",
-      { names: Array<string> },
-      Array<null | {
-        dayOfWeekAverages: Array<number>;
-        downloadCount: number;
-        name: string;
-        updatedAt: number;
-      }>
+      { name: string },
+      any
     >;
+    updateGithubOwnerStats: FunctionReference<
+      "action",
+      "public",
+      { githubAccessToken: string; owner: string; page?: number },
+      any
+    >;
+    updateGithubRepoStars: FunctionReference<
+      "mutation",
+      "public",
+      { name: string; owner: string; starCount: number },
+      any
+    >;
+    updateGithubRepos: FunctionReference<
+      "mutation",
+      "public",
+      {
+        repos: Array<{
+          contributorCount: number;
+          dependentCount: number;
+          name: string;
+          owner: string;
+          starCount: number;
+        }>;
+      },
+      any
+    >;
+  };
+  lib: {
     sync: FunctionReference<
       "action",
       "public",
@@ -65,53 +93,37 @@ export type Mounts = {
       },
       null
     >;
-    updateGithubOwner: FunctionReference<
-      "mutation",
+  };
+  npm: {
+    getNpmOrgs: FunctionReference<
+      "query",
       "public",
-      {
-        contributorCount?: number;
-        dependentCount?: number;
-        owner: string;
-        starCount?: number;
-      },
-      any
-    >;
-    updateGithubRepoStars: FunctionReference<
-      "mutation",
-      "public",
-      {
-        githubAccessToken: string;
+      { names: Array<string> },
+      Array<null | {
+        dayOfWeekAverages: Array<number>;
+        downloadCount: number;
+        downloadCountUpdatedAt: number;
         name: string;
-        owner: string;
-        starCount?: number;
-      },
-      any
-    >;
-    updateGithubRepos: FunctionReference<
-      "mutation",
-      "public",
-      {
-        repos: Array<{
-          contributorCount: number;
-          dependentCount: number;
-          dependentCountPrevious?: { count: number; updatedAt: number };
-          name: string;
-          owner: string;
-          starCount: number;
-        }>;
-      },
-      any
+        updatedAt: number;
+      }>
     >;
     updateNpmOrg: FunctionReference<
       "mutation",
       "public",
-      { dayOfWeekAverages: Array<number>; downloadCount: number; name: string },
+      { name: string },
       any
     >;
-    updateNpmPackages: FunctionReference<
+    updateNpmOrgStats: FunctionReference<
+      "action",
+      "public",
+      { org: string; page?: number },
+      any
+    >;
+    updateNpmPackagesForOrg: FunctionReference<
       "mutation",
       "public",
       {
+        org: string;
         packages: Array<{
           dayOfWeekAverages: Array<number>;
           downloadCount: number;
