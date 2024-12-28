@@ -69,7 +69,7 @@ export const useNpmDownloadCounter = (
     dayOfWeekAverages?.[(new Date().getDay() + 8) % 7] ?? 0;
   return useFakeCounter({
     value: downloadCount,
-    nextValue: (downloadCount ?? 0) + nextDayOfWeekAverage,
+    nextValue: (downloadCount ?? 0) + Math.round(nextDayOfWeekAverage * 0.8),
     rangeStart: downloadCountUpdatedAt,
     rangeEnd: (downloadCountUpdatedAt ?? 0) + 1000 * 60 * 60 * 24,
   });
