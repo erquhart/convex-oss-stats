@@ -61,7 +61,8 @@ export const useNpmDownloadCounter = (
     downloadCount: number;
     dayOfWeekAverages: number[];
     downloadCountUpdatedAt: number;
-  } | null
+  } | null,
+  { intervalMs }: { intervalMs?: number } = {}
 ) => {
   const { downloadCount, dayOfWeekAverages, downloadCountUpdatedAt } =
     npmPackageOrOrg ?? {};
@@ -72,5 +73,6 @@ export const useNpmDownloadCounter = (
     nextValue: (downloadCount ?? 0) + Math.round(nextDayOfWeekAverage * 0.8),
     rangeStart: downloadCountUpdatedAt,
     rangeEnd: (downloadCountUpdatedAt ?? 0) + 1000 * 60 * 60 * 24,
+    intervalMs,
   });
 };
