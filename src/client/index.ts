@@ -97,6 +97,15 @@ export class OssStats {
     });
   }
 
+  async clear(ctx: RunActionCtx) {
+    return ctx.runAction(this.component.lib.clearAndSync, {
+      githubAccessToken: this.githubAccessToken,
+      githubOwners: this.githubOwners,
+      npmOrgs: this.npmOrgs,
+      minStars: this.minStars,
+    });
+  }
+
   /**
    * Gets GitHub data for a given owner.
    * @param ctx - The ctx from your query or mutation.
