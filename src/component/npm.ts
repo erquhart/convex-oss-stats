@@ -64,6 +64,7 @@ export const updateNpmPackagesForOrg = mutation({
           downloadCountUpdatedAt: Date.now(),
           dayOfWeekAverages:
             pkg.dayOfWeekAverages || existingPackage.dayOfWeekAverages,
+          updatedAt: Date.now(),
         });
         return;
       }
@@ -205,6 +206,7 @@ export const updateNpmOrg = mutation({
         (acc, pkg) => acc.map((val, idx) => val + pkg.dayOfWeekAverages[idx]),
         Array(7).fill(0)
       ),
+      updatedAt: Date.now(),
     });
   },
 });

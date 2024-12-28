@@ -7,7 +7,7 @@
     "email": "support@convex.dev",
     "url": "https://github.com/get-convex/oss-stats/issues"
   },
-  "version": "0.3.3",
+  "version": "0.3.4",
   "license": "Apache-2.0",
   "keywords": [
     "convex",
@@ -23,7 +23,7 @@
     "prepare": "npm run build",
     "prepack": "node node10stubs.mjs",
     "postpack": "node node10stubs.mjs --cleanup",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "test:coverage": "vitest run --coverage --coverage.reporter=text"
   },
@@ -90,6 +90,7 @@
     "@octokit/graphql": "^8.1.1",
     "@octokit/graphql-schema": "^15.25.0",
     "cheerio": "^1.0.0",
+    "convex-helpers": "^0.1.67",
     "date-fns": "^4.1.0",
     "framer-motion": "^11.11.17",
     "nano": "^10.1.4",
