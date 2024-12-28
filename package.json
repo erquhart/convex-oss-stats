@@ -90,6 +90,7 @@
     "@octokit/graphql": "^8.1.1",
     "@octokit/graphql-schema": "^15.25.0",
     "cheerio": "^1.0.0",
+    "convex-helpers": "^0.1.67",
     "date-fns": "^4.1.0",
     "framer-motion": "^11.11.17",
     "nano": "^10.1.4",
