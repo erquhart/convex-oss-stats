@@ -3,7 +3,6 @@ import { v } from "convex/values";
 import { Crons } from "@convex-dev/crons";
 import { api, components } from "./_generated/api";
 import { asyncMap } from "convex-helpers";
-import { paginationOptsValidator } from "convex/server";
 const crons = new Crons(components.crons);
 
 export const sync = action({
@@ -50,15 +49,12 @@ export const sync = action({
 export const clearPage = mutation({
   args: {
     tableName: v.union(v.literal("githubRepos"), v.literal("npmPackages")),
-    paginationOpts: paginationOptsValidator,
   },
-  returns: v.union(v.null(), v.string()),
+  returns: v.object({ isDone: v.boolean() }),
   handler: async (ctx, args) => {
-    const result = await ctx.db
-      .query(args.tableName)
-      .paginate(args.paginationOpts);
-    await asyncMap(result.page, (doc) => ctx.db.delete(doc._id));
-    return result.isDone ? null : result.continueCursor;
+    const docs = await ctx.db.query(args.tableName).take(200);
+    await asyncMap(docs, (doc) => ctx.db.delete(doc._id));
+    return { isDone: docs.length === 0 };
   },
 });
 
@@ -68,16 +64,12 @@ export const clearTable = action({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    let cursor: string | null = null;
+    let isDone = false;
     do {
-      cursor = await ctx.runMutation(api.lib.clearPage, {
+      ({ isDone } = await ctx.runMutation(api.lib.clearPage, {
         tableName: args.tableName,
-        paginationOpts: {
-          numItems: 200,
-          cursor,
-        },
-      });
-    } while (cursor);
+      }));
+    } while (!isDone);
   },
 });
 
