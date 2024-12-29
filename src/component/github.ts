@@ -135,6 +135,17 @@ export const updateGithubRepos = mutation({
           contributorCount:
             repo.contributorCount || existingRepo.contributorCount,
           dependentCount: repo.dependentCount || existingRepo.dependentCount,
+          dependentCountUpdatedAt: repo.dependentCount
+            ? Date.now()
+            : existingRepo.dependentCountUpdatedAt,
+          dependentCountPrevious:
+            existingRepo.dependentCount === repo.dependentCount ||
+            !repo.dependentCount
+              ? existingRepo.dependentCountPrevious
+              : {
+                  count: existingRepo.dependentCount,
+                  updatedAt: Date.now(),
+                },
           updatedAt: Date.now(),
         });
         return;
@@ -143,6 +154,7 @@ export const updateGithubRepos = mutation({
         ...repo,
         nameNormalized: repo.name.toLowerCase(),
         ownerNormalized: repo.owner.toLowerCase(),
+        dependentCountUpdatedAt: repo.dependentCount ? Date.now() : undefined,
         updatedAt: Date.now(),
       });
     });
@@ -169,6 +181,11 @@ export const updateGithubOwner = mutation({
         dependentCount: 0,
         updatedAt: Date.now(),
       }));
+    const existingOwner = await ctx.db.get(ownerId);
+    if (!existingOwner) {
+      // This should never happen
+      throw new Error(`Owner ${args.name} not found`);
+    }
 
     const repos = await ctx.db
       .query("githubRepos")
@@ -177,7 +194,11 @@ export const updateGithubOwner = mutation({
       )
       .collect();
 
-    const { starCount, contributorCount, dependentCount } = repos.reduce(
+    const {
+      starCount,
+      contributorCount,
+      dependentCount: updatedDependentCount,
+    } = repos.reduce(
       (acc, repo) => ({
         starCount: acc.starCount + repo.starCount,
         contributorCount: acc.contributorCount + repo.contributorCount,
@@ -186,10 +207,30 @@ export const updateGithubOwner = mutation({
       { starCount: 0, contributorCount: 0, dependentCount: 0 }
     );
 
+    const shouldUpdateDependentCount =
+      !existingOwner.dependentCountPrevious ||
+      Date.now() - existingOwner.dependentCountPrevious.updatedAt >=
+        1000 * 60 * 60 * 24;
+
+    const dependentCountPrevious = shouldUpdateDependentCount
+      ? {
+          // ensure against zero previous count to avoid exaggerated
+          // difference in expected change over 24h
+          count: existingOwner.dependentCount || updatedDependentCount,
+          updatedAt: Date.now(),
+        }
+      : existingOwner?.dependentCountPrevious;
+
     await ctx.db.patch(ownerId, {
       starCount,
       contributorCount,
-      dependentCount,
+      dependentCountPrevious,
+      dependentCount: shouldUpdateDependentCount
+        ? updatedDependentCount
+        : existingOwner.dependentCount,
+      dependentCountUpdatedAt: shouldUpdateDependentCount
+        ? Date.now()
+        : existingOwner.dependentCountUpdatedAt,
       updatedAt: Date.now(),
     });
   },

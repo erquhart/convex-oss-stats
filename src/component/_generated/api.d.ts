@@ -41,7 +41,8 @@ export type Mounts = {
       Array<null | {
         contributorCount: number;
         dependentCount: number;
-        dependentCountPrevious?: any;
+        dependentCountPrevious?: { count: number; updatedAt: number };
+        dependentCountUpdatedAt?: number;
         name: string;
         nameNormalized: string;
         starCount: number;
@@ -82,6 +83,29 @@ export type Mounts = {
     >;
   };
   lib: {
+    clearAndSync: FunctionReference<
+      "action",
+      "public",
+      {
+        githubAccessToken: string;
+        githubOwners: Array<string>;
+        minStars: number;
+        npmOrgs: Array<string>;
+      },
+      any
+    >;
+    clearPage: FunctionReference<
+      "mutation",
+      "public",
+      { tableName: "githubRepos" | "npmPackages" },
+      { isDone: boolean }
+    >;
+    clearTable: FunctionReference<
+      "action",
+      "public",
+      { tableName: "githubRepos" | "npmPackages" },
+      null
+    >;
     sync: FunctionReference<
       "action",
       "public",

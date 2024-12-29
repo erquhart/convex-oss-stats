@@ -2,9 +2,9 @@ import { components } from "./_generated/api";
 import { OssStats } from "@convex-dev/oss-stats";
 
 export const ossStats = new OssStats(components.ossStats, {
-  githubOwners: ["get-convex"],
-  npmOrgs: ["convex-dev"],
+  githubOwners: ["tanstack"],
+  npmOrgs: ["tanstack"],
 });
 
 // Re-export functions for direct access from your convex instance
-export const { sync, getGithubOwner, getNpmOrg } = ossStats.api();
+export const { sync, clearAndSync, getGithubOwner, getNpmOrg } = ossStats.api();

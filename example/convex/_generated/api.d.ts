@@ -51,7 +51,8 @@ export declare const components: {
         Array<null | {
           contributorCount: number;
           dependentCount: number;
-          dependentCountPrevious?: any;
+          dependentCountPrevious?: { count: number; updatedAt: number };
+          dependentCountUpdatedAt?: number;
           name: string;
           nameNormalized: string;
           starCount: number;
@@ -92,6 +93,29 @@ export declare const components: {
       >;
     };
     lib: {
+      clearAndSync: FunctionReference<
+        "action",
+        "internal",
+        {
+          githubAccessToken: string;
+          githubOwners: Array<string>;
+          minStars: number;
+          npmOrgs: Array<string>;
+        },
+        any
+      >;
+      clearPage: FunctionReference<
+        "mutation",
+        "internal",
+        { tableName: "githubRepos" | "npmPackages" },
+        { isDone: boolean }
+      >;
+      clearTable: FunctionReference<
+        "action",
+        "internal",
+        { tableName: "githubRepos" | "npmPackages" },
+        null
+      >;
       sync: FunctionReference<
         "action",
         "internal",

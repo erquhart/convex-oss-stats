@@ -14,22 +14,19 @@ const useFakeCounter = ({
   intervalMs?: number;
 }) => {
   const [isInitialized, setIsInitialized] = useState(false);
-  const [currentValue, setCurrentValue] = useState(value);
+  const [currentValue, setCurrentValue] = useState(value || undefined);
+
+  const changeCurrentValue = (v?: number) => setCurrentValue(v || undefined);
 
   const updateCurrentValue = useCallback(() => {
-    if (
-      typeof value !== "number" ||
-      typeof nextValue !== "number" ||
-      typeof rangeStart !== "number" ||
-      typeof rangeEnd !== "number"
-    ) {
-      setCurrentValue(value);
+    if (!value || !nextValue || !rangeStart || !rangeEnd) {
+      changeCurrentValue(value);
       return;
     }
     const diff = nextValue - value;
     const duration = rangeEnd - rangeStart;
     const rate = diff / duration;
-    setCurrentValue(Math.round(value + rate * (Date.now() - rangeStart)));
+    changeCurrentValue(Math.round(value + rate * (Date.now() - rangeStart)));
   }, [value, nextValue, rangeStart, rangeEnd]);
 
   // Avoid initial delay
@@ -37,15 +34,15 @@ const useFakeCounter = ({
     if (isInitialized) {
       return;
     }
-    if (typeof value === "number" && typeof currentValue !== "number") {
-      setCurrentValue(value);
+    if (value && !currentValue) {
+      changeCurrentValue(value);
       return;
     }
-    if (typeof value === "number" && typeof nextValue === "number") {
-      setCurrentValue(nextValue);
+    if (value && nextValue && rangeStart && rangeEnd) {
+      updateCurrentValue();
       setIsInitialized(true);
     }
-  }, [isInitialized, value, nextValue, currentValue]);
+  }, [isInitialized, value, nextValue, rangeStart, rangeEnd, currentValue]);
 
   useEffect(() => {
     const interval = setInterval(updateCurrentValue, intervalMs);
@@ -53,6 +50,14 @@ const useFakeCounter = ({
       clearInterval(interval);
     };
   }, [updateCurrentValue, intervalMs]);
+  if ((currentValue ?? 0) < 10000000) {
+    console.log("--------------------------------");
+    console.log("currentValue", currentValue);
+    console.log("value", value);
+    console.log("nextValue", nextValue);
+    console.log("rangeStart", rangeStart);
+    console.log("rangeEnd", rangeEnd);
+  }
   return currentValue;
 };
 
@@ -73,6 +78,38 @@ export const useNpmDownloadCounter = (
     nextValue: (downloadCount ?? 0) + Math.round(nextDayOfWeekAverage * 0.8),
     rangeStart: downloadCountUpdatedAt,
     rangeEnd: (downloadCountUpdatedAt ?? 0) + 1000 * 60 * 60 * 24,
+    intervalMs,
+  });
+};
+
+export const useGithubDependentCounter = (
+  githubOwner?: {
+    dependentCount: number;
+    dependentCountUpdatedAt?: number;
+    dependentCountPrevious?: {
+      count: number;
+      updatedAt: number;
+    };
+  } | null,
+  { intervalMs }: { intervalMs?: number } = {}
+) => {
+  const {
+    dependentCount = 0,
+    dependentCountUpdatedAt = 0,
+    dependentCountPrevious = { count: 0, updatedAt: 0 },
+  } = githubOwner ?? {};
+  const nextValue =
+    dependentCount < dependentCountPrevious.count
+      ? 0
+      : dependentCount + (dependentCount - dependentCountPrevious.count);
+  console.log("NEXTVALUE", nextValue, nextValue * 0.8);
+  console.log("RANGEEND", dependentCountUpdatedAt);
+
+  return useFakeCounter({
+    value: dependentCount,
+    nextValue: Math.max(dependentCount, nextValue),
+    rangeStart: dependentCountPrevious.updatedAt,
+    rangeEnd: dependentCountUpdatedAt,
     intervalMs,
   });
 };
