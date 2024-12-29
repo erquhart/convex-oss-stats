@@ -12,6 +12,7 @@ export default defineSchema({
 
     // deprecated
     dependentCountPrevious: v.optional(v.any()),
+    dependentCountComparison: v.optional(v.any()),
   }).index("name", ["nameNormalized"]),
   githubRepos: defineTable({
     owner: v.string(),
@@ -25,6 +26,7 @@ export default defineSchema({
 
     // deprecated
     dependentCountPrevious: v.optional(v.any()),
+    dependentCountComparison: v.optional(v.any()),
   })
     .index("owner", ["ownerNormalized"])
     .index("owner_name", ["ownerNormalized", "nameNormalized"]),
