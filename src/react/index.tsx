@@ -50,14 +50,6 @@ const useFakeCounter = ({
       clearInterval(interval);
     };
   }, [updateCurrentValue, intervalMs]);
-  if ((currentValue ?? 0) < 10000000) {
-    console.log("--------------------------------");
-    console.log("currentValue", currentValue);
-    console.log("value", value);
-    console.log("nextValue", nextValue);
-    console.log("rangeStart", rangeStart);
-    console.log("rangeEnd", rangeEnd);
-  }
   return currentValue;
 };
 
@@ -102,8 +94,6 @@ export const useGithubDependentCounter = (
     dependentCount < dependentCountPrevious.count
       ? 0
       : dependentCount + (dependentCount - dependentCountPrevious.count);
-  console.log("NEXTVALUE", nextValue, nextValue * 0.8);
-  console.log("RANGEEND", dependentCountUpdatedAt);
 
   return useFakeCounter({
     value: dependentCount,
