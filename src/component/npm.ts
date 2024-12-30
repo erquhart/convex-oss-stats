@@ -196,7 +196,7 @@ export const updateNpmOrg = mutation({
       (acc, pkg) => acc + pkg.downloadCount,
       0
     );
-    if (downloadCount === org.downloadCount) {
+    if (!downloadCount || downloadCount === org.downloadCount) {
       return;
     }
     await ctx.db.patch(org._id, {
