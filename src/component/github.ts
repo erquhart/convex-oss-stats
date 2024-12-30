@@ -37,7 +37,9 @@ export const updateGithubRepoStars = mutation({
   handler: async (ctx, args) => {
     const owner = await ctx.db
       .query("githubOwners")
-      .withIndex("name", (q) => q.eq("nameNormalized", args.owner))
+      .withIndex("name", (q) =>
+        q.eq("nameNormalized", args.owner.toLowerCase())
+      )
       .unique();
     if (!owner) {
       throw new Error(`Owner ${args.owner} not found`);
