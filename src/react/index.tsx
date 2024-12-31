@@ -1,11 +1,18 @@
 import { useCallback, useState, useEffect } from "react";
 
+const INTERVAL_MS_MIN = 100;
+const INTERVAL_MS_MAX = 1000;
+const MAX_CHANGE_PER_SECOND = 15;
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.max(min, Math.min(value, max));
+
 const useFakeCounter = ({
   value,
   nextValue,
   rangeStart,
   rangeEnd,
-  intervalMs = 1000,
+  intervalMs: intervalMsOpt,
 }: {
   value?: number;
   nextValue?: number;
@@ -15,7 +22,9 @@ const useFakeCounter = ({
 }) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [currentValue, setCurrentValue] = useState(value || undefined);
-
+  const [intervalMs, setIntervalMs] = useState(
+    intervalMsOpt || INTERVAL_MS_MAX
+  );
   const changeCurrentValue = (v?: number) => setCurrentValue(v || undefined);
 
   const updateCurrentValue = useCallback(() => {
@@ -26,7 +35,25 @@ const useFakeCounter = ({
     const diff = nextValue - value;
     const duration = rangeEnd - rangeStart;
     const rate = diff / duration;
-    changeCurrentValue(Math.round(value + rate * (Date.now() - rangeStart)));
+    const currentValue = Math.round(value + rate * (Date.now() - rangeStart));
+    changeCurrentValue(currentValue);
+
+    // NumberFlow continuous updates work best at lower intervals, so we
+    // optimize for this if no explicit interval is provided.
+    if (!intervalMsOpt) {
+      const changePerSecond =
+        value +
+        Math.round(rate * (Date.now() - rangeStart + 1000) - currentValue);
+      const nextIntervalMs = clamp(
+        Math.round(1000 / (changePerSecond / MAX_CHANGE_PER_SECOND)),
+        INTERVAL_MS_MIN,
+        INTERVAL_MS_MAX
+      );
+      setIntervalMs((state) => {
+        const diff = Math.abs(state - nextIntervalMs);
+        return diff < 50 ? state : nextIntervalMs;
+      });
+    }
   }, [value, nextValue, rangeStart, rangeEnd]);
 
   // Avoid initial delay
@@ -50,7 +77,7 @@ const useFakeCounter = ({
       clearInterval(interval);
     };
   }, [updateCurrentValue, intervalMs]);
-  return currentValue;
+  return { count: currentValue, intervalMs };
 };
 
 export const useNpmDownloadCounter = (

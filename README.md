@@ -40,7 +40,7 @@ const OssStats = () => {
     <>
       {/* If webhook is registered, this will update in realtime 🔥 */}
       <div>{githubOwner.starCount}</div>
-      <div>{liveNpmDownloadCount}</div>
+      <div>{liveNpmDownloadCount.count}</div>
     </>
   );
 };
@@ -187,13 +187,39 @@ const { downloadCount, dayOfWeekAverages, updatedAt } = useQuery(
 
 #### `useNpmDownloadCounter`
 
+Provides a forecasted download count for an npm package or org that updates on
+an interval.
+
+Args:
+- `npmOrg`: npmOrg object returned from the `getNpmOrg` query
+- `options`: optional options object
+  - `intervalMs`: override the calculated interval
+
+Returns:
+- `count`: regularly updated download count
+- `intervalMs`: the interval at which the count is updated (useful for
+  configuring client animations, such as a NumberFlow component)
+
 ```ts
 import { useNpmDownloadCounter } from "@convex-dev/oss-stats/react";
+import NumberFlow from '@number-flow/react'
 
 const npmOrg = useQuery(api.stats.getNpmOrg, { org: "convex-dev" });
 
-// Hook returns a number that updates based on a forecast of the npm download count
-const downloadCount = useNpmDownloadCounter(npmOrg);
+const { count, intervalMs } = useNpmDownloadCounter(npmOrg)
+
+return (
+  <NumberFlow
+    transformTiming={{
+      duration: intervalMs,
+      easing: 'linear',
+    }}
+    value={count}
+    trend={1}
+    continuous
+    willChange
+  />
+)
 ```
 
 ## Querying data from the backend

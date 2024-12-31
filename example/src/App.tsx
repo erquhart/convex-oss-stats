@@ -19,7 +19,6 @@ function App() {
   // Source data for this value is not possible to get live, so we use
   // previous values to forecast based on averages.
   const liveNpmDownloadCount = useNpmDownloadCounter(npmOwner);
-  console.log("githubOwner", githubOwner);
   const liveGithubDependentCount = useGithubDependentCounter(githubOwner);
   return (
     <>
@@ -28,10 +27,10 @@ function App() {
       <div className="card">
         <div>
           <p>Github Owner: {githubOwner?.name}</p>
-          <p>Github Dependent Count: {liveGithubDependentCount}</p>
+          <p>Github Dependent Count: {liveGithubDependentCount.count}</p>
           <p>Github Stars: {githubOwner?.starCount}</p>
           <p>NPM Owner: {npmOwner?.name}</p>
-          <p>NPM Download Count: {liveNpmDownloadCount}</p>
+          <p>NPM Download Count: {liveNpmDownloadCount.count}</p>
         </div>
         <p>
           See <code>example/convex/example.ts</code> for all the ways to use
