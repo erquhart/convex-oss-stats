@@ -10,7 +10,7 @@
     "lint": "tsc -p convex && eslint convex"
   },
   "dependencies": {
-    "@convex-dev/oss-stats": "file:..",
+    "@erquhart/convex-oss-stats": "file:..",
     "convex": "file:../node_modules/convex",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

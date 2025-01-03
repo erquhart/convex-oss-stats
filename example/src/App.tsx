@@ -1,7 +1,7 @@
 import "./App.css";
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { useNpmDownloadCounter } from "@convex-dev/oss-stats/react";
+import { useNpmDownloadCounter } from "@erquhart/convex-oss-stats/react";
 
 function App() {
   const githubOwner =

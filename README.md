@@ -9,7 +9,7 @@ Keep GitHub and npm data for your open source projects synced to your Convex dat
 ```ts
 // convex/stats.ts
 import { components } from "./_generated/api";
-import { OssStats } from "@convex-dev/oss-stats";
+import { OssStats } from "@erquhart/convex-oss-stats";
 
 export const ossStats = new OssStats(components.ossStats, {
   githubOwners: ["get-convex"],
@@ -22,7 +22,7 @@ export const { sync, getGithubOwner, getNpmOrg } = ossStats.api();
 ```tsx
 // src/OssStats.tsx
 import { useQuery } from "convex/react";
-import { useNpmDownloadCounter } from "@convex-dev/oss-stats/react";
+import { useNpmDownloadCounter } from "@erquhart/convex-oss-stats/react";
 import { api } from "../convex/_generated/api";
 
 const OssStats = () => {
@@ -80,7 +80,7 @@ npm data accessed by this component is public and doesn't require any credential
 Install the component package:
 
 ```ts
-npm install @convex-dev/oss-stats
+npm install @erquhart/convex-oss-stats
 ```
 
 Create a `convex.config.ts` file in your app's `convex/` folder and install the component by calling `use`:
@@ -88,7 +88,7 @@ Create a `convex.config.ts` file in your app's `convex/` folder and install the 
 ```ts
 // convex/convex.config.ts
 import { defineApp } from "convex/server";
-import ossStats from "@convex-dev/oss-stats/convex.config";
+import ossStats from "@erquhart/convex-oss-stats/convex.config";
 
 const app = defineApp();
 app.use(ossStats);
@@ -111,7 +111,7 @@ Instantiate an OssStats Component client in a file in your app's `convex/` folde
 
 ```ts
 // convex/example.ts
-import { OssStats } from "@convex-dev/oss-stats";
+import { OssStats } from "@erquhart/convex-oss-stats";
 import { components } from "./_generated/api";
 
 export const ossStats = new OssStats(components.ossStats, {
@@ -188,7 +188,7 @@ const { downloadCount, dayOfWeekAverages, updatedAt } = useQuery(
 #### `useNpmDownloadCounter`
 
 ```ts
-import { useNpmDownloadCounter } from "@convex-dev/oss-stats/react";
+import { useNpmDownloadCounter } from "@erquhart/convex-oss-stats/react";
 
 const npmOrg = useQuery(api.stats.getNpmOrg, { org: "convex-dev" });
 
