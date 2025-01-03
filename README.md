@@ -1,6 +1,6 @@
 # Convex OSS Stats Component
 
-[![npm version](https://badge.fury.io/js/@convex-dev%2Foss-stats.svg)](https://badge.fury.io/js/@convex-dev%2Foss-stats)
+[![npm version](https://badge.fury.io/js/@erquhart%2Fconvex-oss-stats.svg)](https://badge.fury.io/js/@erquhart%2Fconvex-oss-stats)
 
 <!-- START: Include on https://convex.dev/components -->
 
