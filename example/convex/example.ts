@@ -1,5 +1,5 @@
 import { components } from "./_generated/api";
-import { OssStats } from "@convex-dev/oss-stats";
+import { OssStats } from "@erquhart/convex-oss-stats";
 
 export const ossStats = new OssStats(components.ossStats, {
   githubOwners: ["tanstack"],
