@@ -46,6 +46,7 @@ export const updateNpmPackagesForOrg = mutation({
         name: v.string(),
         downloadCount: v.number(),
         dayOfWeekAverages: v.array(v.number()),
+        isNotFound: v.optional(v.boolean()),
       })
     ),
   },
@@ -56,6 +57,13 @@ export const updateNpmPackagesForOrg = mutation({
         .withIndex("name", (q) => q.eq("name", pkg.name))
         .unique();
       if (existingPackage?.downloadCount === pkg.downloadCount) {
+        return;
+      }
+      if (existingPackage && pkg.isNotFound) {
+        await ctx.db.delete(existingPackage._id);
+        return;
+      }
+      if (pkg.isNotFound) {
         return;
       }
       if (existingPackage) {
@@ -132,7 +140,14 @@ const fetchNpmPackageDownloadCount = async (name: string, created: number) => {
     const pageData: {
       end: string;
       downloads: { day: string; downloads: number }[];
+      error?: string;
     } = await response.json();
+    if (!pageData.downloads) {
+      console.log("pageData", pageData);
+    }
+    if (pageData.error === `package ${name} not found`) {
+      return;
+    }
     const downloadCount = pageData.downloads.reduce(
       (acc: number, cur: { downloads: number }) => acc + cur.downloads,
       0
@@ -223,12 +238,19 @@ export const updateNpmOrgStats = action({
       page
     );
     const packagesWithDownloadCount = await asyncMap(packages, async (pkg) => {
-      const { totalDownloadCount, dayOfWeekAverages } =
-        await fetchNpmPackageDownloadCount(pkg.name, pkg.created);
+      const result = await fetchNpmPackageDownloadCount(pkg.name, pkg.created);
+      if (!result) {
+        return {
+          name: pkg.name,
+          downloadCount: 0,
+          dayOfWeekAverages: [],
+          isNotFound: true,
+        };
+      }
       return {
         name: pkg.name,
-        downloadCount: totalDownloadCount,
-        dayOfWeekAverages,
+        downloadCount: result.totalDownloadCount,
+        dayOfWeekAverages: result.dayOfWeekAverages,
       };
     });
 
