@@ -151,6 +151,7 @@ export type Mounts = {
         packages: Array<{
           dayOfWeekAverages: Array<number>;
           downloadCount: number;
+          isNotFound?: boolean;
           name: string;
         }>;
       },
