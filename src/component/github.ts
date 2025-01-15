@@ -257,6 +257,10 @@ export const updateGithubOwnerStats = action({
     const repos: { name: string; stargazers_count: number }[] =
       await response.json();
 
+    if (!Array.isArray(repos)) {
+      throw new Error(JSON.stringify(repos, null, 2));
+    }
+
     if (repos.length === 0) {
       await ctx.runMutation(api.github.updateGithubOwner, {
         name: args.owner,
