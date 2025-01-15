@@ -1,11 +1,11 @@
 {
   "name": "@erquhart/convex-oss-stats",
   "description": "A Convex Component for syncing and rendering open source project data.",
-  "repository": "github:get-convex/oss-stats",
-  "homepage": "https://github.com/get-convex/oss-stats#readme",
+  "repository": "github:erquhart/convex-oss-stats",
+  "homepage": "https://github.com/erquhart/convex-oss-stats#readme",
   "bugs": {
-    "email": "support@convex.dev",
-    "url": "https://github.com/get-convex/oss-stats/issues"
+    "email": "shawn@erquh.art",
+    "url": "https://github.com/erquhart/convex-oss-stats/issues"
   },
   "version": "0.5.2",
   "license": "Apache-2.0",
