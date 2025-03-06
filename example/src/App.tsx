@@ -4,7 +4,7 @@ import { api } from "../convex/_generated/api";
 import {
   useGithubDependentCounter,
   useNpmDownloadCounter,
-} from "@erquhart/convex-oss-stats/react";
+} from "../../src/react";
 
 function App() {
   const githubOwner =
