@@ -17,7 +17,9 @@ export class OssStats {
   public githubAccessToken: string;
   public githubWebhookSecret: string;
   public githubOwners: string[];
+  public githubRepos: string[];
   public npmOrgs: string[];
+  public npmPackages: string[];
   public minStars: number;
   constructor(
     public component: UseApi<typeof api>,
@@ -25,7 +27,9 @@ export class OssStats {
       githubAccessToken?: string;
       githubWebhookSecret?: string;
       githubOwners?: string[];
+      githubRepos?: string[];
       npmOrgs?: string[];
+      npmPackages?: string[];
       minStars?: number;
     }
   ) {
@@ -34,7 +38,9 @@ export class OssStats {
     this.githubWebhookSecret =
       options?.githubWebhookSecret ?? process.env.GITHUB_WEBHOOK_SECRET!;
     this.githubOwners = options?.githubOwners ?? [];
+    this.githubRepos = options?.githubRepos ?? [];
     this.npmOrgs = options?.npmOrgs ?? [];
+    this.npmPackages = options?.npmPackages ?? [];
     this.minStars = options?.minStars ?? 1;
     if (!this.githubAccessToken) {
       throw new Error("GITHUB_ACCESS_TOKEN is required");
@@ -92,7 +98,9 @@ export class OssStats {
     return ctx.runAction(this.component.lib.sync, {
       githubAccessToken: this.githubAccessToken,
       githubOwners: this.githubOwners,
+      githubRepos: this.githubRepos,
       npmOrgs: this.npmOrgs,
+      npmPackages: this.npmPackages,
       minStars: this.minStars,
     });
   }
@@ -101,8 +109,22 @@ export class OssStats {
     return ctx.runAction(this.component.lib.clearAndSync, {
       githubAccessToken: this.githubAccessToken,
       githubOwners: this.githubOwners,
+      githubRepos: this.githubRepos,
       npmOrgs: this.npmOrgs,
+      npmPackages: this.npmPackages,
       minStars: this.minStars,
+    });
+  }
+
+  async getGithubRepo(ctx: RunQueryCtx, name: string) {
+    return await ctx.runQuery(this.component.github.getGithubRepo, {
+      name,
+    });
+  }
+
+  async getGithubRepos(ctx: RunQueryCtx, names: string[]) {
+    return await ctx.runQuery(this.component.github.getGithubRepos, {
+      names,
     });
   }
 
@@ -156,6 +178,18 @@ export class OssStats {
     ).flatMap((org) => (org ? [org] : []));
   }
 
+  async getNpmPackage(ctx: RunQueryCtx, name: string) {
+    return await ctx.runQuery(this.component.npm.getNpmPackage, {
+      name,
+    });
+  }
+
+  async getNpmPackages(ctx: RunQueryCtx, names: string[]) {
+    return await ctx.runQuery(this.component.npm.getNpmPackages, {
+      names,
+    });
+  }
+
   /**
    * For easy re-exporting.
    * Apps can do
@@ -189,6 +223,22 @@ export class OssStats {
           return this.getAllGithubOwners(ctx);
         },
       }),
+      getGithubRepo: queryGeneric({
+        args: {
+          name: v.string(),
+        },
+        handler: (ctx, args) => {
+          return this.getGithubRepo(ctx, args.name);
+        },
+      }),
+      getGithubRepos: queryGeneric({
+        args: {
+          names: v.array(v.string()),
+        },
+        handler: (ctx, args) => {
+          return this.getGithubRepos(ctx, args.names);
+        },
+      }),
       getNpmOrg: queryGeneric({
         args: {
           name: v.string(),
@@ -201,6 +251,22 @@ export class OssStats {
         args: {},
         handler: (ctx) => {
           return this.getAllNpmOrgs(ctx);
+        },
+      }),
+      getNpmPackage: queryGeneric({
+        args: {
+          name: v.string(),
+        },
+        handler: (ctx, args) => {
+          return this.getNpmPackage(ctx, args.name);
+        },
+      }),
+      getNpmPackages: queryGeneric({
+        args: {
+          names: v.array(v.string()),
+        },
+        handler: (ctx, args) => {
+          return this.getNpmPackages(ctx, args.names);
         },
       }),
     };

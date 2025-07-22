@@ -8,22 +8,36 @@ const crons = new Crons(components.crons);
 export const sync = action({
   args: {
     githubAccessToken: v.string(),
-    githubOwners: v.array(v.string()),
-    npmOrgs: v.array(v.string()),
-    minStars: v.number(),
+    githubOwners: v.optional(v.array(v.string())),
+    githubRepos: v.optional(v.array(v.string())),
+    npmOrgs: v.optional(v.array(v.string())),
+    npmPackages: v.optional(v.array(v.string())),
+    minStars: v.optional(v.number()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    console.log("sync", args);
     await Promise.all([
-      asyncMap(args.githubOwners, (owner) =>
+      asyncMap(args.githubOwners ?? [], (owner) =>
         ctx.runAction(api.github.updateGithubOwnerStats, {
           owner,
           githubAccessToken: args.githubAccessToken,
         })
       ),
-      asyncMap(args.npmOrgs, (org) =>
+      asyncMap(args.githubRepos ?? [], (repo) =>
+        ctx.runAction(api.github.updateGithubRepoStats, {
+          repo,
+          githubAccessToken: args.githubAccessToken,
+        })
+      ),
+      asyncMap(args.npmOrgs ?? [], (org) =>
         ctx.runAction(api.npm.updateNpmOrgStats, {
           org,
+        })
+      ),
+      asyncMap(args.npmPackages ?? [], (pkg) =>
+        ctx.runAction(api.npm.updateNpmPackageStats, {
+          name: pkg,
         })
       ),
     ]);
@@ -38,7 +52,9 @@ export const sync = action({
       {
         githubAccessToken: args.githubAccessToken,
         githubOwners: args.githubOwners,
+        githubRepos: args.githubRepos,
         npmOrgs: args.npmOrgs,
+        npmPackages: args.npmPackages,
         minStars: args.minStars,
       },
       "sync"
@@ -76,9 +92,11 @@ export const clearTable = action({
 export const clearAndSync = action({
   args: {
     githubAccessToken: v.string(),
-    githubOwners: v.array(v.string()),
-    npmOrgs: v.array(v.string()),
-    minStars: v.number(),
+    githubOwners: v.optional(v.array(v.string())),
+    githubRepos: v.optional(v.array(v.string())),
+    npmOrgs: v.optional(v.array(v.string())),
+    npmPackages: v.optional(v.array(v.string())),
+    minStars: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     await asyncMap(["githubRepos", "npmPackages"] as const, (tableName) =>
@@ -89,7 +107,9 @@ export const clearAndSync = action({
     await ctx.scheduler.runAfter(0, api.lib.sync, {
       githubAccessToken: args.githubAccessToken,
       githubOwners: args.githubOwners,
+      githubRepos: args.githubRepos,
       npmOrgs: args.npmOrgs,
+      npmPackages: args.npmPackages,
       minStars: args.minStars,
     });
   },

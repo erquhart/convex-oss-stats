@@ -49,6 +49,23 @@ export type Mounts = {
         updatedAt: number;
       }>
     >;
+    getGithubRepo: FunctionReference<
+      "query",
+      "public",
+      { name: string; owner: string },
+      null | {
+        contributorCount: number;
+        dependentCount: number;
+        dependentCountPrevious?: { count: number; updatedAt: number };
+        dependentCountUpdatedAt?: number;
+        name: string;
+        nameNormalized: string;
+        owner: string;
+        ownerNormalized: string;
+        starCount: number;
+        updatedAt: number;
+      }
+    >;
     updateGithubOwner: FunctionReference<
       "mutation",
       "public",
@@ -65,6 +82,12 @@ export type Mounts = {
       "mutation",
       "public",
       { name: string; owner: string; starCount: number },
+      any
+    >;
+    updateGithubRepoStats: FunctionReference<
+      "action",
+      "public",
+      { githubAccessToken: string; repo: string },
       any
     >;
     updateGithubRepos: FunctionReference<
@@ -88,9 +111,11 @@ export type Mounts = {
       "public",
       {
         githubAccessToken: string;
-        githubOwners: Array<string>;
-        minStars: number;
-        npmOrgs: Array<string>;
+        githubOwners?: Array<string>;
+        githubRepos?: Array<string>;
+        minStars?: number;
+        npmOrgs?: Array<string>;
+        npmPackages?: Array<string>;
       },
       any
     >;
@@ -111,9 +136,11 @@ export type Mounts = {
       "public",
       {
         githubAccessToken: string;
-        githubOwners: Array<string>;
-        minStars: number;
-        npmOrgs: Array<string>;
+        githubOwners?: Array<string>;
+        githubRepos?: Array<string>;
+        minStars?: number;
+        npmOrgs?: Array<string>;
+        npmPackages?: Array<string>;
       },
       null
     >;
@@ -131,6 +158,19 @@ export type Mounts = {
         updatedAt: number;
       }>
     >;
+    getNpmPackage: FunctionReference<
+      "query",
+      "public",
+      { name: string },
+      null | {
+        dayOfWeekAverages: Array<number>;
+        downloadCount: number;
+        downloadCountUpdatedAt?: number;
+        name: string;
+        org?: string;
+        updatedAt: number;
+      }
+    >;
     updateNpmOrg: FunctionReference<
       "mutation",
       "public",
@@ -141,6 +181,18 @@ export type Mounts = {
       "action",
       "public",
       { org: string; page?: number },
+      any
+    >;
+    updateNpmPackage: FunctionReference<
+      "mutation",
+      "public",
+      { dayOfWeekAverages: Array<number>; downloadCount: number; name: string },
+      any
+    >;
+    updateNpmPackageStats: FunctionReference<
+      "action",
+      "public",
+      { name: string },
       any
     >;
     updateNpmPackagesForOrg: FunctionReference<

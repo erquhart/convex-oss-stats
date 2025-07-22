@@ -38,6 +38,73 @@ export const getNpmOrgs = query({
   },
 });
 
+export const getNpmPackage = query({
+  args: {
+    name: v.string(),
+  },
+  returns: v.union(v.null(), schema.tables.npmPackages.validator),
+  handler: async (ctx, args) => {
+    const pkg = await ctx.db
+      .query("npmPackages")
+      .withIndex("name", (q) => q.eq("name", args.name))
+      .unique();
+    if (pkg) {
+      return withoutSystemFields(pkg);
+    }
+    return null;
+  },
+});
+
+export const getNpmPackages = query({
+  args: {
+    names: v.array(v.string()),
+  },
+  returns: v.object({
+    downloadCount: v.number(),
+    dayOfWeekAverages: v.array(v.number()),
+    downloadCountUpdatedAt: v.number(),
+    updatedAt: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    const packages = await Promise.all(
+      args.names.map(async (name) => {
+        const pkg = await ctx.db
+          .query("npmPackages")
+          .withIndex("name", (q) => q.eq("name", name))
+          .unique();
+        if (pkg) {
+          return withoutSystemFields(pkg);
+        }
+        return null;
+      })
+    );
+    return packages.reduce(
+      (acc, pkg) => {
+        if (!pkg) {
+          return acc;
+        }
+        return {
+          downloadCount: acc.downloadCount + pkg.downloadCount,
+          dayOfWeekAverages: acc.dayOfWeekAverages.map(
+            (avg, idx) => avg + pkg.dayOfWeekAverages[idx]
+          ),
+          downloadCountUpdatedAt: Math.max(
+            acc.downloadCountUpdatedAt ?? 0,
+            pkg.downloadCountUpdatedAt ?? 0
+          ),
+          updatedAt: Math.max(acc.updatedAt ?? 0, pkg.updatedAt ?? 0),
+        };
+      },
+      {
+        downloadCount: 0,
+        dayOfWeekAverages: Array(7).fill(0),
+        downloadCountUpdatedAt: 0,
+        updatedAt: 0,
+      }
+    );
+  },
+});
+
 export const updateNpmPackagesForOrg = mutation({
   args: {
     org: v.string(),
@@ -86,6 +153,42 @@ export const updateNpmPackagesForOrg = mutation({
   },
 });
 
+export const updateNpmPackage = mutation({
+  args: {
+    name: v.string(),
+    downloadCount: v.number(),
+    dayOfWeekAverages: v.array(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const existingPackage = await ctx.db
+      .query("npmPackages")
+      .withIndex("name", (q) => q.eq("name", args.name))
+      .unique();
+    console.log("existingPackage", existingPackage);
+    console.log("args", args);
+    if (existingPackage?.downloadCount === args.downloadCount) {
+      return;
+    }
+    if (existingPackage) {
+      await ctx.db.patch(existingPackage._id, {
+        downloadCount: args.downloadCount || existingPackage.downloadCount,
+        downloadCountUpdatedAt: Date.now(),
+        dayOfWeekAverages:
+          args.dayOfWeekAverages || existingPackage.dayOfWeekAverages,
+        updatedAt: Date.now(),
+      });
+      return;
+    }
+    await ctx.db.insert("npmPackages", {
+      name: args.name,
+      downloadCount: args.downloadCount,
+      dayOfWeekAverages: args.dayOfWeekAverages,
+      downloadCountUpdatedAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  },
+});
+
 const fetchNpmPackageListForOrg = async (org: string, page: number) => {
   const response = await fetch(
     `https://www.npmjs.com/org/${org}?page=${page}`,
@@ -122,6 +225,16 @@ const fetchNpmPackageListForOrg = async (org: string, page: number) => {
   };
 };
 
+const fetchNpmPackageInfo = async (name: string) => {
+  const response = await fetch(`https://registry.npmjs.com/${name}`);
+  const data: {
+    time: { created: string };
+  } = await response.json();
+  return {
+    created: data.time.created,
+  };
+};
+
 const fetchNpmPackageDownloadCount = async (name: string, created: number) => {
   const currentDateIso = new Date().toISOString().substring(0, 10);
   let nextDate = new Date(created);
@@ -134,6 +247,12 @@ const fetchNpmPackageDownloadCount = async (name: string, created: number) => {
       nextDate = new Date();
     }
     const to = nextDate.toISOString().substring(0, 10);
+    console.log("from", from);
+    console.log("to", to);
+    console.log(
+      "url",
+      `https://api.npmjs.org/downloads/range/${from}:${to}/${name}`
+    );
     const response = await fetch(
       `https://api.npmjs.org/downloads/range/${from}:${to}/${name}`
     );
@@ -142,6 +261,7 @@ const fetchNpmPackageDownloadCount = async (name: string, created: number) => {
       downloads: { day: string; downloads: number }[];
       error?: string;
     } = await response.json();
+    console.log("pageData", pageData);
     if (!pageData.downloads) {
       console.log("pageData", pageData);
     }
@@ -269,6 +389,27 @@ export const updateNpmOrgStats = action({
 
     await ctx.runMutation(api.npm.updateNpmOrg, {
       name: args.org,
+    });
+  },
+});
+
+export const updateNpmPackageStats = action({
+  args: {
+    name: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const info = await fetchNpmPackageInfo(args.name);
+    const result = await fetchNpmPackageDownloadCount(
+      args.name,
+      new Date(info.created).getTime()
+    );
+    if (!result) {
+      return;
+    }
+    await ctx.runMutation(api.npm.updateNpmPackage, {
+      name: args.name,
+      downloadCount: result.totalDownloadCount,
+      dayOfWeekAverages: result.dayOfWeekAverages,
     });
   },
 });

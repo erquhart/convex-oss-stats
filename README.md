@@ -12,11 +12,24 @@ import { components } from "./_generated/api";
 import { OssStats } from "@erquhart/convex-oss-stats";
 
 export const ossStats = new OssStats(components.ossStats, {
+  // Get stats for entire owners / orgs
   githubOwners: ["get-convex"],
   npmOrgs: ["convex-dev"],
+  // Or individual repos / packages
+  githubRepos: ["get-convex/convex-js"],
+  npmPackages: ["@convex-dev/convex-js"],
 });
 
-export const { sync, getGithubOwner, getNpmOrg } = ossStats.api();
+export const {
+  sync,
+  clearAndSync,
+  getGithubOwner,
+  getNpmOrg,
+  getGithubRepo,
+  getGithubRepos,
+  getNpmPackage,
+  getNpmPackages,
+} = ossStats.api();
 ```
 
 ```tsx
@@ -183,6 +196,42 @@ const { downloadCount, dayOfWeekAverages, updatedAt } = useQuery(
 );
 ```
 
+#### `stats.getGithubRepo`
+
+```ts
+const { starCount, dependentCount, dayOfWeekAverages, updatedAt } = useQuery(
+  api.stats.getGithubRepo,
+  { name: "get-convex/convex-js" }
+);
+```
+
+#### `stats.getGithubRepos`
+
+```ts
+const { starCount, dependentCount, dayOfWeekAverages, updatedAt } = useQuery(
+  api.stats.getGithubRepos,
+  { names: ["get-convex/convex-js", "get-convex/convex-helpers"] }
+);
+```
+
+#### `stats.getNpmPackage`
+
+```ts
+const { downloadCount, dayOfWeekAverages, updatedAt } = useQuery(
+  api.stats.getNpmPackage,
+  { name: "@convex-dev/convex-js" }
+);
+```
+
+#### `stats.getNpmPackages`
+
+```ts
+const { downloadCount, dayOfWeekAverages, updatedAt } = useQuery(
+  api.stats.getNpmPackages,
+  { names: ["@convex-dev/convex-js", "@convex-dev/convex-helpers"] }
+);
+```
+
 ### React hooks
 
 #### `useNpmDownloadCounter`
@@ -192,7 +241,7 @@ an interval.
 
 Args:
 
-- `npmOrg`: npmOrg object returned from the `getNpmOrg` query
+- `npmPackageOrOrg`: npmPackageOrOrg object returned from the `getNpmPackage` or `getNpmOrg` query
 - `options`: optional options object
   - `intervalMs`: override the calculated interval
 
@@ -240,6 +289,20 @@ const githubOwner = await ossStats.getGithubOwner(ctx, "get-convex");
 const npmOrgs = await ossStats.getAllNpmOrgs(ctx);
 // A single npm org
 const npmOrg = await ossStats.getNpmOrg(ctx, "convex-dev");
+// A single github repo
+const githubRepo = await ossStats.getGithubRepo(ctx, "get-convex/convex-js");
+// Combined stats for a list of github repos
+const githubRepos = await ossStats.getGithubRepos(ctx, [
+  "get-convex/convex-js",
+  "get-convex/convex-helpers",
+]);
+// A single npm package
+const npmPackage = await ossStats.getNpmPackage(ctx, "@convex-dev/convex-js");
+// Combined stats for a list of npm packages
+const npmPackages = await ossStats.getNpmPackages(ctx, [
+  "@convex-dev/convex-js",
+  "@convex-dev/convex-helpers",
+]);
 ```
 
 ## Options and configuration

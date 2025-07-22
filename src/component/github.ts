@@ -25,6 +25,48 @@ export const getGithubOwners = query({
   },
 });
 
+export const getGithubRepo = query({
+  args: {
+    name: v.string(),
+  },
+  returns: v.union(v.null(), schema.tables.githubRepos.validator),
+  handler: async (ctx, args) => {
+    const [owner, repo] = args.name.split("/");
+    return ctx.db
+      .query("githubRepos")
+      .withIndex("owner_name", (q) =>
+        q
+          .eq("ownerNormalized", owner.toLowerCase())
+          .eq("nameNormalized", repo.toLowerCase())
+      )
+      .unique()
+      .then(nullOrWithoutSystemFields);
+  },
+});
+
+export const getGithubRepos = query({
+  args: {
+    names: v.array(v.string()),
+  },
+  returns: v.array(v.union(v.null(), schema.tables.githubRepos.validator)),
+  handler: async (ctx, args) => {
+    return Promise.all(
+      args.names.map((name) => {
+        const [owner, repo] = name.split("/");
+        return ctx.db
+          .query("githubRepos")
+          .withIndex("owner_name", (q) =>
+            q
+              .eq("ownerNormalized", owner.toLowerCase())
+              .eq("nameNormalized", repo.toLowerCase())
+          )
+          .unique()
+          .then(nullOrWithoutSystemFields);
+      })
+    );
+  },
+});
+
 /*
  * Handler for Github stars webhook
  */
@@ -159,6 +201,40 @@ export const updateGithubRepos = mutation({
         dependentCountUpdatedAt: repo.dependentCount ? Date.now() : undefined,
         updatedAt: Date.now(),
       });
+    });
+  },
+});
+
+export const updateGithubRepoStats = action({
+  args: {
+    repo: v.string(),
+    githubAccessToken: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const [ownerName, repoName] = args.repo.split("/");
+    const response = await fetch(
+      `https://api.github.com/repos/${ownerName}/${repoName}`,
+      {
+        headers: {
+          Authorization: `Bearer ${args.githubAccessToken}`,
+        },
+      }
+    );
+    const repo: { name: string; stargazers_count: number } =
+      await response.json();
+
+    const pageData = await getGithubRepoPageData(ownerName, repoName);
+
+    await ctx.runMutation(api.github.updateGithubRepos, {
+      repos: [
+        {
+          owner: ownerName,
+          name: repoName,
+          starCount: repo.stargazers_count ?? 0,
+          contributorCount: pageData.contributorCount,
+          dependentCount: pageData.dependentCount,
+        },
+      ],
     });
   },
 });
