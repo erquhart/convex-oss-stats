@@ -52,7 +52,7 @@ export type Mounts = {
     getGithubRepo: FunctionReference<
       "query",
       "public",
-      { name: string; owner: string },
+      { name: string },
       null | {
         contributorCount: number;
         dependentCount: number;
@@ -65,6 +65,23 @@ export type Mounts = {
         starCount: number;
         updatedAt: number;
       }
+    >;
+    getGithubRepos: FunctionReference<
+      "query",
+      "public",
+      { names: Array<string> },
+      Array<null | {
+        contributorCount: number;
+        dependentCount: number;
+        dependentCountPrevious?: { count: number; updatedAt: number };
+        dependentCountUpdatedAt?: number;
+        name: string;
+        nameNormalized: string;
+        owner: string;
+        ownerNormalized: string;
+        starCount: number;
+        updatedAt: number;
+      }>
     >;
     updateGithubOwner: FunctionReference<
       "mutation",
@@ -168,6 +185,17 @@ export type Mounts = {
         downloadCountUpdatedAt?: number;
         name: string;
         org?: string;
+        updatedAt: number;
+      }
+    >;
+    getNpmPackages: FunctionReference<
+      "query",
+      "public",
+      { names: Array<string> },
+      {
+        dayOfWeekAverages: Array<number>;
+        downloadCount: number;
+        downloadCountUpdatedAt: number;
         updatedAt: number;
       }
     >;

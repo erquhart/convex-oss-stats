@@ -62,7 +62,7 @@ export declare const components: {
       getGithubRepo: FunctionReference<
         "query",
         "internal",
-        { name: string; owner: string },
+        { name: string },
         null | {
           contributorCount: number;
           dependentCount: number;
@@ -75,6 +75,23 @@ export declare const components: {
           starCount: number;
           updatedAt: number;
         }
+      >;
+      getGithubRepos: FunctionReference<
+        "query",
+        "internal",
+        { names: Array<string> },
+        Array<null | {
+          contributorCount: number;
+          dependentCount: number;
+          dependentCountPrevious?: { count: number; updatedAt: number };
+          dependentCountUpdatedAt?: number;
+          name: string;
+          nameNormalized: string;
+          owner: string;
+          ownerNormalized: string;
+          starCount: number;
+          updatedAt: number;
+        }>
       >;
       updateGithubOwner: FunctionReference<
         "mutation",
@@ -178,6 +195,17 @@ export declare const components: {
           downloadCountUpdatedAt?: number;
           name: string;
           org?: string;
+          updatedAt: number;
+        }
+      >;
+      getNpmPackages: FunctionReference<
+        "query",
+        "internal",
+        { names: Array<string> },
+        {
+          dayOfWeekAverages: Array<number>;
+          downloadCount: number;
+          downloadCountUpdatedAt: number;
           updatedAt: number;
         }
       >;
