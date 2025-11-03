@@ -70,13 +70,18 @@ export class OssStats {
         }
         const body = JSON.parse(bodyString);
         const {
-          repository: { name, owner, stargazers_count: stars },
+          repository,
+        }: {
+          repository: {
+            name: string;
+            owner: { login: string };
+            stargazers_count: number;
+          };
         } = body;
-        await ctx.runMutation(this.component.lib.updateGithubRepoStars, {
-          owner: owner.login,
-          name,
-          starCount: stars,
-          githubAccessToken: this.githubAccessToken,
+        await ctx.runMutation(this.component.github.updateGithubRepoStars, {
+          owner: repository.owner.login,
+          name: repository.name,
+          starCount: repository.stargazers_count,
         });
         return new Response(null, { status: 200 });
       }),
@@ -93,13 +98,13 @@ export class OssStats {
   }
 
   /**
-   * Gets the GitHub stars for a given owner.
+   * Gets GitHub data for a given owner.
    * @param ctx - The ctx from your query or mutation.
-   * @param owner - The owner to get the stars for.
+   * @param owner - The owner to get data for.
    */
   async getGithubOwner(ctx: RunQueryCtx, owner: string) {
     return (
-      await ctx.runQuery(this.component.lib.getGithubOwners, {
+      await ctx.runQuery(this.component.github.getGithubOwners, {
         owners: [owner],
       })
     )[0];
@@ -109,9 +114,22 @@ export class OssStats {
    * Gets the GitHub stars for the owners you've configured.
    * @param ctx - The ctx from your query or mutation.
    */
+  async clearAndSync(ctx: RunActionCtx) {
+    return ctx.runAction(this.component.lib.clearAndSync, {
+      githubAccessToken: this.githubAccessToken,
+      githubOwners: this.githubOwners,
+      npmOrgs: this.npmOrgs,
+      minStars: this.minStars,
+    });
+  }
+
+  /**
+   * Gets GitHub data for the owners you've configured.
+   * @param ctx - The ctx from your query or mutation.
+   */
   async getAllGithubOwners(ctx: RunQueryCtx) {
     return (
-      await ctx.runQuery(this.component.lib.getGithubOwners, {
+      await ctx.runQuery(this.component.github.getGithubOwners, {
         owners: this.githubOwners,
       })
     ).flatMap((owner) => (owner ? [owner] : []));
@@ -124,7 +142,7 @@ export class OssStats {
    */
   async getNpmOrg(ctx: RunQueryCtx, name: string) {
     return (
-      await ctx.runQuery(this.component.lib.getNpmOrgs, {
+      await ctx.runQuery(this.component.npm.getNpmOrgs, {
         names: [name],
       })
     )[0];
@@ -136,7 +154,7 @@ export class OssStats {
    */
   async getAllNpmOrgs(ctx: RunQueryCtx) {
     return (
-      await ctx.runQuery(this.component.lib.getNpmOrgs, {
+      await ctx.runQuery(this.component.npm.getNpmOrgs, {
         names: this.npmOrgs,
       })
     ).flatMap((org) => (org ? [org] : []));
@@ -154,6 +172,11 @@ export class OssStats {
       sync: internalActionGeneric({
         handler: (ctx, _args) => {
           return this.sync(ctx);
+        },
+      }),
+      clearAndSync: internalActionGeneric({
+        handler: (ctx, _args) => {
+          return this.clearAndSync(ctx);
         },
       }),
       getGithubOwner: queryGeneric({
