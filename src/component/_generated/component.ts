@@ -1,6 +1,6 @@
 /* eslint-disable */
 /**
- * Generated `api` utility.
+ * Generated `ComponentApi` utility.
  *
  * THIS CODE IS AUTOMATICALLY GENERATED.
  *
@@ -8,50 +8,21 @@
  * @module
  */
 
-import type * as crons from "../crons.js";
-import type * as example from "../example.js";
-import type * as http from "../http.js";
-
-import type {
-  ApiFromModules,
-  FilterApi,
-  FunctionReference,
-} from "convex/server";
-
-declare const fullApi: ApiFromModules<{
-  crons: typeof crons;
-  example: typeof example;
-  http: typeof http;
-}>;
+import type { FunctionReference } from "convex/server";
 
 /**
- * A utility for referencing Convex functions in your app's public API.
+ * A utility for referencing a Convex component's exposed API.
  *
+ * Useful when expecting a parameter like `components.myComponent`.
  * Usage:
- * ```js
- * const myFunctionReference = api.myModule.myFunction;
+ * ```ts
+ * async function myFunction(ctx: QueryCtx, component: ComponentApi) {
+ *   return ctx.runQuery(component.someFile.someQuery, { ...args });
+ * }
  * ```
  */
-export declare const api: FilterApi<
-  typeof fullApi,
-  FunctionReference<any, "public">
->;
-
-/**
- * A utility for referencing Convex functions in your app's internal API.
- *
- * Usage:
- * ```js
- * const myFunctionReference = internal.myModule.myFunction;
- * ```
- */
-export declare const internal: FilterApi<
-  typeof fullApi,
-  FunctionReference<any, "internal">
->;
-
-export declare const components: {
-  ossStats: {
+export type ComponentApi<Name extends string | undefined = string | undefined> =
+  {
     github: {
       getGithubOwners: FunctionReference<
         "query",
@@ -66,25 +37,29 @@ export declare const components: {
           nameNormalized: string;
           starCount: number;
           updatedAt: number;
-        }>
+        }>,
+        Name
       >;
       updateGithubOwner: FunctionReference<
         "mutation",
         "internal",
         { name: string },
-        any
+        any,
+        Name
       >;
       updateGithubOwnerStats: FunctionReference<
         "action",
         "internal",
         { githubAccessToken: string; owner: string; page?: number },
-        any
+        any,
+        Name
       >;
       updateGithubRepoStars: FunctionReference<
         "mutation",
         "internal",
         { name: string; owner: string; starCount: number },
-        any
+        any,
+        Name
       >;
       updateGithubRepos: FunctionReference<
         "mutation",
@@ -98,7 +73,8 @@ export declare const components: {
             starCount: number;
           }>;
         },
-        any
+        any,
+        Name
       >;
     };
     lib: {
@@ -111,19 +87,22 @@ export declare const components: {
           minStars: number;
           npmOrgs: Array<string>;
         },
-        any
+        any,
+        Name
       >;
       clearPage: FunctionReference<
         "mutation",
         "internal",
         { tableName: "githubRepos" | "npmPackages" },
-        { isDone: boolean }
+        { isDone: boolean },
+        Name
       >;
       clearTable: FunctionReference<
         "action",
         "internal",
         { tableName: "githubRepos" | "npmPackages" },
-        null
+        null,
+        Name
       >;
       sync: FunctionReference<
         "action",
@@ -134,7 +113,8 @@ export declare const components: {
           minStars: number;
           npmOrgs: Array<string>;
         },
-        null
+        null,
+        Name
       >;
     };
     npm: {
@@ -148,19 +128,22 @@ export declare const components: {
           downloadCountUpdatedAt: number;
           name: string;
           updatedAt: number;
-        }>
+        }>,
+        Name
       >;
       updateNpmOrg: FunctionReference<
         "mutation",
         "internal",
         { name: string },
-        any
+        any,
+        Name
       >;
       updateNpmOrgStats: FunctionReference<
         "action",
         "internal",
         { org: string; page?: number },
-        any
+        any,
+        Name
       >;
       updateNpmPackagesForOrg: FunctionReference<
         "mutation",
@@ -173,8 +156,8 @@ export declare const components: {
             name: string;
           }>;
         },
-        any
+        any,
+        Name
       >;
     };
   };
-};
