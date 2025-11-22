@@ -54,13 +54,6 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         any,
         Name
       >;
-      updateGithubRepoStars: FunctionReference<
-        "mutation",
-        "internal",
-        { name: string; owner: string; starCount: number },
-        any,
-        Name
-      >;
       updateGithubRepos: FunctionReference<
         "mutation",
         "internal",
@@ -73,6 +66,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             starCount: number;
           }>;
         },
+        any,
+        Name
+      >;
+      updateGithubRepoStars: FunctionReference<
+        "mutation",
+        "internal",
+        { name: string; owner: string; starCount: number },
         any,
         Name
       >;
