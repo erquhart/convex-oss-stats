@@ -164,8 +164,6 @@ export const updateNpmPackage = mutation({
       .query("npmPackages")
       .withIndex("name", (q) => q.eq("name", args.name))
       .unique();
-    console.log("existingPackage", existingPackage);
-    console.log("args", args);
     if (existingPackage?.downloadCount === args.downloadCount) {
       return;
     }
@@ -211,7 +209,9 @@ const fetchNpmPackageListForOrg = async (org: string, page: number) => {
     throw new Error(`npm org ${org} not found`);
   }
   if (data.scope.type === "user") {
-    throw new Error(`${org} is a user, not an org`);
+    throw new Error(
+      `${org} is a user, not an org - only npm orgs are supported`
+    );
   }
   if (!data.packages) {
     throw new Error(`no packages for ${org}, page ${page}`);
@@ -227,9 +227,17 @@ const fetchNpmPackageListForOrg = async (org: string, page: number) => {
 
 const fetchNpmPackageInfo = async (name: string) => {
   const response = await fetch(`https://registry.npmjs.com/${name}`);
-  const data: {
-    time: { created: string };
-  } = await response.json();
+  const data:
+    | {
+        time: { created: string };
+      }
+    | { error: string } = await response.json();
+  if ("error" in data && data.error === "Not found") {
+    throw new Error(`package ${name} not found`);
+  }
+  if ("error" in data) {
+    throw new Error(data.error);
+  }
   return {
     created: data.time.created,
   };
@@ -247,12 +255,6 @@ const fetchNpmPackageDownloadCount = async (name: string, created: number) => {
       nextDate = new Date();
     }
     const to = nextDate.toISOString().substring(0, 10);
-    console.log("from", from);
-    console.log("to", to);
-    console.log(
-      "url",
-      `https://api.npmjs.org/downloads/range/${from}:${to}/${name}`
-    );
     const response = await fetch(
       `https://api.npmjs.org/downloads/range/${from}:${to}/${name}`
     );
@@ -261,10 +263,6 @@ const fetchNpmPackageDownloadCount = async (name: string, created: number) => {
       downloads: { day: string; downloads: number }[];
       error?: string;
     } = await response.json();
-    console.log("pageData", pageData);
-    if (!pageData.downloads) {
-      console.log("pageData", pageData);
-    }
     if (pageData.error === `package ${name} not found`) {
       return;
     }
