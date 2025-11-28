@@ -23,10 +23,11 @@ const useFakeCounter = ({
   const [isInitialized, setIsInitialized] = useState(false);
   const [currentValue, setCurrentValue] = useState(value || undefined);
   const [intervalMs, setIntervalMs] = useState(
-    intervalMsOpt || INTERVAL_MS_MAX
+    intervalMsOpt || INTERVAL_MS_MAX,
   );
   const changeCurrentValue = (v?: number) => setCurrentValue(v || undefined);
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const updateCurrentValue = useCallback(() => {
     if (!value || !nextValue || !rangeStart || !rangeEnd) {
       changeCurrentValue(value);
@@ -47,7 +48,7 @@ const useFakeCounter = ({
       const nextIntervalMs = clamp(
         Math.round(1000 / (changePerSecond / MAX_CHANGE_PER_SECOND)),
         INTERVAL_MS_MIN,
-        INTERVAL_MS_MAX
+        INTERVAL_MS_MAX,
       );
       setIntervalMs((state) => {
         const diff = Math.abs(state - nextIntervalMs);
@@ -62,6 +63,7 @@ const useFakeCounter = ({
       return;
     }
     if (value && !currentValue) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       changeCurrentValue(value);
       return;
     }
@@ -86,7 +88,7 @@ export const useNpmDownloadCounter = (
     dayOfWeekAverages: number[];
     downloadCountUpdatedAt: number;
   } | null,
-  { intervalMs }: { intervalMs?: number } = {}
+  { intervalMs }: { intervalMs?: number } = {},
 ) => {
   const { downloadCount, dayOfWeekAverages, downloadCountUpdatedAt } =
     npmPackageOrOrg ?? {};
@@ -110,7 +112,7 @@ export const useGithubDependentCounter = (
       updatedAt: number;
     };
   } | null,
-  { intervalMs }: { intervalMs?: number } = {}
+  { intervalMs }: { intervalMs?: number } = {},
 ) => {
   const {
     dependentCount = 0,

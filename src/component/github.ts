@@ -1,11 +1,11 @@
-import { mutation, action, query } from "./_generated/server";
+import { mutation, action, query } from "./_generated/server.js";
 import { v } from "convex/values";
 import * as cheerio from "cheerio";
 import { asyncMap } from "convex-helpers";
 import pLimit from "p-limit";
-import { api } from "./_generated/api";
-import schema from "./schema";
-import { nullOrWithoutSystemFields } from "./util";
+import { api } from "./_generated/api.js";
+import schema from "./schema.js";
+import { nullOrWithoutSystemFields } from "./util.js";
 
 export const getGithubOwners = query({
   args: {
@@ -19,8 +19,8 @@ export const getGithubOwners = query({
           .query("githubOwners")
           .withIndex("name", (q) => q.eq("nameNormalized", owner.toLowerCase()))
           .unique()
-          .then(nullOrWithoutSystemFields)
-      )
+          .then(nullOrWithoutSystemFields),
+      ),
     );
   },
 });
@@ -37,7 +37,7 @@ export const getGithubRepo = query({
       .withIndex("owner_name", (q) =>
         q
           .eq("ownerNormalized", owner.toLowerCase())
-          .eq("nameNormalized", repo.toLowerCase())
+          .eq("nameNormalized", repo.toLowerCase()),
       )
       .unique()
       .then(nullOrWithoutSystemFields);
@@ -58,11 +58,11 @@ export const getGithubRepos = query({
           .withIndex("owner_name", (q) =>
             q
               .eq("ownerNormalized", owner.toLowerCase())
-              .eq("nameNormalized", repo.toLowerCase())
+              .eq("nameNormalized", repo.toLowerCase()),
           )
           .unique()
           .then(nullOrWithoutSystemFields);
-      })
+      }),
     );
   },
 });
@@ -80,7 +80,7 @@ export const updateGithubRepoStars = mutation({
     const owner = await ctx.db
       .query("githubOwners")
       .withIndex("name", (q) =>
-        q.eq("nameNormalized", args.owner.toLowerCase())
+        q.eq("nameNormalized", args.owner.toLowerCase()),
       )
       .unique();
     if (!owner) {
@@ -91,7 +91,7 @@ export const updateGithubRepoStars = mutation({
       .withIndex("owner_name", (q) =>
         q
           .eq("ownerNormalized", args.owner.toLowerCase())
-          .eq("nameNormalized", args.name.toLowerCase())
+          .eq("nameNormalized", args.name.toLowerCase()),
       )
       .unique();
     if (!repo) {
@@ -117,7 +117,7 @@ const getGithubRepoPageData = async (owner: string, name: string) => {
   let dependentCount: number | undefined;
   while (retries > 0) {
     const html = await fetch(`https://github.com/${owner}/${name}`).then(
-      (res) => res.text()
+      (res) => res.text(),
     );
     const $ = cheerio.load(html);
     const parseNumber = (str = "") => Number(str.replace(/,/g, ""));
@@ -153,7 +153,7 @@ export const updateGithubRepos = mutation({
         starCount: v.number(),
         contributorCount: v.number(),
         dependentCount: v.number(),
-      })
+      }),
     ),
   },
   handler: async (ctx, args) => {
@@ -163,7 +163,7 @@ export const updateGithubRepos = mutation({
         .withIndex("owner_name", (q) =>
           q
             .eq("ownerNormalized", repo.owner.toLowerCase())
-            .eq("nameNormalized", repo.name.toLowerCase())
+            .eq("nameNormalized", repo.name.toLowerCase()),
         )
         .unique();
       if (
@@ -218,7 +218,7 @@ export const updateGithubRepoStats = action({
         headers: {
           Authorization: `Bearer ${args.githubAccessToken}`,
         },
-      }
+      },
     );
     const repo: { name: string; stargazers_count: number } =
       await response.json();
@@ -247,7 +247,7 @@ export const updateGithubOwner = mutation({
         await ctx.db
           .query("githubOwners")
           .withIndex("name", (q) =>
-            q.eq("nameNormalized", args.name.toLowerCase())
+            q.eq("nameNormalized", args.name.toLowerCase()),
           )
           .unique()
       )?._id ??
@@ -268,7 +268,7 @@ export const updateGithubOwner = mutation({
     const repos = await ctx.db
       .query("githubRepos")
       .withIndex("owner", (q) =>
-        q.eq("ownerNormalized", args.name.toLowerCase())
+        q.eq("ownerNormalized", args.name.toLowerCase()),
       )
       .collect();
 
@@ -282,7 +282,7 @@ export const updateGithubOwner = mutation({
         contributorCount: acc.contributorCount + repo.contributorCount,
         dependentCount: acc.dependentCount + repo.dependentCount,
       }),
-      { starCount: 0, contributorCount: 0, dependentCount: 0 }
+      { starCount: 0, contributorCount: 0, dependentCount: 0 },
     );
 
     const shouldUpdateDependentCount =
@@ -328,7 +328,7 @@ export const updateGithubOwnerStats = action({
         headers: {
           Authorization: `Bearer ${args.githubAccessToken}`,
         },
-      }
+      },
     );
     const repos: { name: string; stargazers_count: number }[] =
       await response.json();

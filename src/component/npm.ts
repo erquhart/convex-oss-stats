@@ -1,9 +1,9 @@
-import { mutation, action, query } from "./_generated/server";
+import { mutation, action, query } from "./_generated/server.js";
 import { v } from "convex/values";
 import { asyncMap } from "convex-helpers";
-import { api } from "./_generated/api";
-import schema from "./schema";
-import { withoutSystemFields } from "./util";
+import { api } from "./_generated/api.js";
+import schema from "./schema.js";
+import { withoutSystemFields } from "./util.js";
 
 export const getNpmOrgs = query({
   args: {
@@ -15,8 +15,8 @@ export const getNpmOrgs = query({
       v.object({
         ...schema.tables.npmOrgs.validator.fields,
         downloadCountUpdatedAt: v.number(),
-      })
-    )
+      }),
+    ),
   ),
   handler: async (ctx, args) => {
     return Promise.all(
@@ -33,7 +33,7 @@ export const getNpmOrgs = query({
           downloadCountUpdatedAt:
             org.downloadCountUpdatedAt ?? Date.now() - 1000 * 60 * 60 * 24,
         };
-      })
+      }),
     );
   },
 });
@@ -76,7 +76,7 @@ export const getNpmPackages = query({
           return withoutSystemFields(pkg);
         }
         return null;
-      })
+      }),
     );
     return packages.reduce(
       (acc, pkg) => {
@@ -86,11 +86,11 @@ export const getNpmPackages = query({
         return {
           downloadCount: acc.downloadCount + pkg.downloadCount,
           dayOfWeekAverages: acc.dayOfWeekAverages.map(
-            (avg, idx) => avg + pkg.dayOfWeekAverages[idx]
+            (avg, idx) => avg + pkg.dayOfWeekAverages[idx],
           ),
           downloadCountUpdatedAt: Math.max(
             acc.downloadCountUpdatedAt ?? 0,
-            pkg.downloadCountUpdatedAt ?? 0
+            pkg.downloadCountUpdatedAt ?? 0,
           ),
           updatedAt: Math.max(acc.updatedAt ?? 0, pkg.updatedAt ?? 0),
         };
@@ -100,7 +100,7 @@ export const getNpmPackages = query({
         dayOfWeekAverages: Array(7).fill(0),
         downloadCountUpdatedAt: 0,
         updatedAt: 0,
-      }
+      },
     );
   },
 });
@@ -114,7 +114,7 @@ export const updateNpmPackagesForOrg = mutation({
         downloadCount: v.number(),
         dayOfWeekAverages: v.array(v.number()),
         isNotFound: v.optional(v.boolean()),
-      })
+      }),
     ),
   },
   handler: async (ctx, args) => {
@@ -195,7 +195,7 @@ const fetchNpmPackageListForOrg = async (org: string, page: number) => {
         "cache-control": "no-cache",
         "x-spiferack": "1",
       },
-    }
+    },
   );
   const data: {
     scope: { type: "org" | "user" };
@@ -210,7 +210,7 @@ const fetchNpmPackageListForOrg = async (org: string, page: number) => {
   }
   if (data.scope.type === "user") {
     throw new Error(
-      `${org} is a user, not an org - only npm orgs are supported`
+      `${org} is a user, not an org - only npm orgs are supported`,
     );
   }
   if (!data.packages) {
@@ -256,7 +256,7 @@ const fetchNpmPackageDownloadCount = async (name: string, created: number) => {
     }
     const to = nextDate.toISOString().substring(0, 10);
     const response = await fetch(
-      `https://api.npmjs.org/downloads/range/${from}:${to}/${name}`
+      `https://api.npmjs.org/downloads/range/${from}:${to}/${name}`,
     );
     const pageData: {
       end: string;
@@ -268,7 +268,7 @@ const fetchNpmPackageDownloadCount = async (name: string, created: number) => {
     }
     const downloadCount = pageData.downloads.reduce(
       (acc: number, cur: { downloads: number }) => acc + cur.downloads,
-      0
+      0,
     );
     totalDownloadCount += downloadCount;
     nextDate.setDate(nextDate.getDate() + 1);
@@ -279,7 +279,7 @@ const fetchNpmPackageDownloadCount = async (name: string, created: number) => {
   nextDate.setDate(nextDate.getDate() + 30);
   const to = nextDate.toISOString().substring(0, 10);
   const lastPageResponse = await fetch(
-    `https://api.npmjs.org/downloads/range/${from}:${to}/${name}`
+    `https://api.npmjs.org/downloads/range/${from}:${to}/${name}`,
   );
   const lastPageData: {
     end: string;
@@ -327,7 +327,7 @@ export const updateNpmOrg = mutation({
       .collect();
     const downloadCount = packages.reduce(
       (acc, pkg) => acc + pkg.downloadCount,
-      0
+      0,
     );
     if (!downloadCount || downloadCount === org.downloadCount) {
       return;
@@ -337,7 +337,7 @@ export const updateNpmOrg = mutation({
       downloadCountUpdatedAt: Date.now(),
       dayOfWeekAverages: packages.reduce(
         (acc, pkg) => acc.map((val, idx) => val + pkg.dayOfWeekAverages[idx]),
-        Array(7).fill(0)
+        Array(7).fill(0),
       ),
       updatedAt: Date.now(),
     });
@@ -353,7 +353,7 @@ export const updateNpmOrgStats = action({
     const page = args.page ?? 0;
     const { packages, hasMore } = await fetchNpmPackageListForOrg(
       args.org,
-      page
+      page,
     );
     const packagesWithDownloadCount = await asyncMap(packages, async (pkg) => {
       const result = await fetchNpmPackageDownloadCount(pkg.name, pkg.created);
@@ -399,7 +399,7 @@ export const updateNpmPackageStats = action({
     const info = await fetchNpmPackageInfo(args.name);
     const result = await fetchNpmPackageDownloadCount(
       args.name,
-      new Date(info.created).getTime()
+      new Date(info.created).getTime(),
     );
     if (!result) {
       return;

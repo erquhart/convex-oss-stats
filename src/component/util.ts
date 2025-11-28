@@ -1,8 +1,7 @@
-import { GenericDocument } from "convex/server";
-import { WithoutSystemFields } from "convex/server";
+import type { WithoutSystemFields, GenericDocument } from "convex/server";
 
 export function nullOrWithoutSystemFields<T extends GenericDocument>(
-  value: T | null
+  value: T | null,
 ): WithoutSystemFields<T> | null {
   if (!value) {
     return null;
@@ -12,7 +11,7 @@ export function nullOrWithoutSystemFields<T extends GenericDocument>(
 }
 
 export const withoutSystemFields = <T extends GenericDocument>(
-  value: T
+  value: T,
 ): WithoutSystemFields<T> => {
   const { _id, _creationTime, ...rest } = value;
   return rest as WithoutSystemFields<T>;

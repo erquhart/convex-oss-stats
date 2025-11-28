@@ -1,17 +1,15 @@
 import {
-  Expand,
-  FunctionReference,
-  GenericActionCtx,
-  GenericDataModel,
-  GenericQueryCtx,
+  type GenericActionCtx,
+  type GenericDataModel,
+  type GenericQueryCtx,
   httpActionGeneric,
   HttpRouter,
   internalActionGeneric,
   queryGeneric,
 } from "convex/server";
-import { GenericId, v } from "convex/values";
-import { api } from "../component/_generated/api";
+import { v } from "convex/values";
 import { Webhooks } from "@octokit/webhooks";
+import type { ComponentApi } from "../component/_generated/component.js";
 
 export class OssStats {
   public githubAccessToken: string;
@@ -22,7 +20,7 @@ export class OssStats {
   public npmPackages: string[];
   public minStars: number;
   constructor(
-    public component: UseApi<typeof api>,
+    public component: ComponentApi,
     public options?: {
       githubAccessToken?: string;
       githubWebhookSecret?: string;
@@ -31,7 +29,7 @@ export class OssStats {
       npmOrgs?: string[];
       npmPackages?: string[];
       minStars?: number;
-    }
+    },
   ) {
     this.githubAccessToken =
       options?.githubAccessToken ?? process.env.GITHUB_ACCESS_TOKEN!;
@@ -58,7 +56,7 @@ export class OssStats {
       path = "/events/github",
     }: {
       path?: string;
-    } = {}
+    } = {},
   ) {
     http.route({
       path,
@@ -282,31 +280,3 @@ type RunQueryCtx = {
 type RunActionCtx = {
   runAction: GenericActionCtx<GenericDataModel>["runAction"];
 };
-
-export type OpaqueIds<T> = T extends GenericId<infer _T> | string
-  ? string
-  : T extends (infer U)[]
-    ? OpaqueIds<U>[]
-    : T extends ArrayBuffer
-      ? ArrayBuffer
-      : T extends object
-        ? { [K in keyof T]: OpaqueIds<T[K]> }
-        : T;
-
-export type UseApi<API> = Expand<{
-  [mod in keyof API]: API[mod] extends FunctionReference<
-    infer FType,
-    "public",
-    infer FArgs,
-    infer FReturnType,
-    infer FComponentPath
-  >
-    ? FunctionReference<
-        FType,
-        "internal",
-        OpaqueIds<FArgs>,
-        OpaqueIds<FReturnType>,
-        FComponentPath
-      >
-    : UseApi<API[mod]>;
-}>;

@@ -8,21 +8,24 @@
  * @module
  */
 
-import type * as crons from "../crons.js";
-import type * as example from "../example.js";
-import type * as http from "../http.js";
+import type * as github from "../github.js";
+import type * as lib from "../lib.js";
+import type * as npm from "../npm.js";
+import type * as util from "../util.js";
 
 import type {
   ApiFromModules,
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import { anyApi, componentsGeneric } from "convex/server";
 
-declare const fullApi: ApiFromModules<{
-  crons: typeof crons;
-  example: typeof example;
-  http: typeof http;
-}>;
+const fullApi: ApiFromModules<{
+  github: typeof github;
+  lib: typeof lib;
+  npm: typeof npm;
+  util: typeof util;
+}> = anyApi as any;
 
 /**
  * A utility for referencing Convex functions in your app's public API.
@@ -32,10 +35,10 @@ declare const fullApi: ApiFromModules<{
  * const myFunctionReference = api.myModule.myFunction;
  * ```
  */
-export declare const api: FilterApi<
+export const api: FilterApi<
   typeof fullApi,
   FunctionReference<any, "public">
->;
+> = anyApi as any;
 
 /**
  * A utility for referencing Convex functions in your app's internal API.
@@ -45,11 +48,11 @@ export declare const api: FilterApi<
  * const myFunctionReference = internal.myModule.myFunction;
  * ```
  */
-export declare const internal: FilterApi<
+export const internal: FilterApi<
   typeof fullApi,
   FunctionReference<any, "internal">
->;
+> = anyApi as any;
 
-export declare const components: {
-  ossStats: import("@erquhart/convex-oss-stats/_generated/component.js").ComponentApi<"ossStats">;
+export const components = componentsGeneric() as unknown as {
+  crons: import("@convex-dev/crons/_generated/component.js").ComponentApi<"crons">;
 };

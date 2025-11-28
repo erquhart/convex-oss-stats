@@ -1,7 +1,7 @@
-import { action, mutation } from "./_generated/server";
+import { action, mutation } from "./_generated/server.js";
 import { v } from "convex/values";
 import { Crons } from "@convex-dev/crons";
-import { api, components } from "./_generated/api";
+import { api, components } from "./_generated/api.js";
 import { asyncMap } from "convex-helpers";
 const crons = new Crons(components.crons);
 
@@ -22,23 +22,23 @@ export const sync = action({
         ctx.runAction(api.github.updateGithubOwnerStats, {
           owner,
           githubAccessToken: args.githubAccessToken,
-        })
+        }),
       ),
       asyncMap(args.githubRepos ?? [], (repo) =>
         ctx.runAction(api.github.updateGithubRepoStats, {
           repo,
           githubAccessToken: args.githubAccessToken,
-        })
+        }),
       ),
       asyncMap(args.npmOrgs ?? [], (org) =>
         ctx.runAction(api.npm.updateNpmOrgStats, {
           org,
-        })
+        }),
       ),
       asyncMap(args.npmPackages ?? [], (pkg) =>
         ctx.runAction(api.npm.updateNpmPackageStats, {
           name: pkg,
-        })
+        }),
       ),
     ]);
     const cron = await crons.get(ctx, { name: "sync" });
@@ -57,7 +57,7 @@ export const sync = action({
         npmPackages: args.npmPackages,
         minStars: args.minStars,
       },
-      "sync"
+      "sync",
     );
   },
 });
@@ -102,7 +102,7 @@ export const clearAndSync = action({
     await asyncMap(["githubRepos", "npmPackages"] as const, (tableName) =>
       ctx.runAction(api.lib.clearTable, {
         tableName,
-      })
+      }),
     );
     await ctx.scheduler.runAfter(0, api.lib.sync, {
       githubAccessToken: args.githubAccessToken,
