@@ -1,1 +1,3 @@
-## 0.8.2-alpha.0
+## 0.8.2
+
+- Update component api internals, scripts
